@@ -5,7 +5,7 @@ import { GameState } from '../types/game';
 import { EnemyCardView } from './EnemyCardView';
 import { CardView } from './CardView';
 import { useI18n } from '../i18n/I18nContext';
-import { Layers, ScrollText, Users, ChevronDown, ChevronUp, Swords } from 'lucide-react';
+import { Layers, ScrollText, Users, ChevronDown, ChevronUp, Swords, Crown } from 'lucide-react';
 
 interface GameBoardProps {
   gameState: GameState;
@@ -92,6 +92,11 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, activePlayerId 
                     : 'border-slate-800 bg-slate-950/60 text-slate-400'
                 }`}
               >
+                {player.isHost && (
+                  <span title={t('hostBadge')}>
+                    <Crown size={12} className="text-amber-400 shrink-0" />
+                  </span>
+                )}
                 <span>{player.name}</span>
                 <span className="text-[9px] bg-slate-900 border border-slate-700 text-slate-300 px-1 py-0.1 rounded-full">
                   {player.hand.length} {player.hand.length === 1 ? t('cardSingular') : t('cardPlural')}
@@ -199,8 +204,8 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, activePlayerId 
             </div>
 
             {isLogExpanded && (
-              <div className="flex flex-col gap-1 text-[10px] sm:text-xs text-slate-300 font-mono border-t border-slate-800/80 pt-1.5 max-h-24 md:max-h-32 overflow-y-auto no-scrollbar">
-                {[...gameState.lastActionLog].reverse().slice(0, 6).map((rawLog, idx) => (
+              <div className="flex flex-col gap-1 text-[10px] sm:text-xs text-slate-300 font-mono border-t border-slate-800/80 pt-1.5 max-h-28 sm:max-h-36 overflow-y-auto no-scrollbar">
+                {[...gameState.lastActionLog].reverse().slice(0, 30).map((rawLog, idx) => (
                   <div key={idx} className="border-l-2 border-amber-500/40 pl-2 py-0.5 leading-tight">
                     {formatLog(rawLog)}
                   </div>

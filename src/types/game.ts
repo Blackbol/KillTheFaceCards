@@ -49,6 +49,7 @@ export interface Player {
   hand: Card[];
   isHost: boolean;
   isConnected: boolean;
+  disconnectedAt?: number;
 }
 
 /**

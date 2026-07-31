@@ -193,7 +193,8 @@ describe('RegicideEngine Unit Test Suite', () => {
       };
 
       const spadeSeven = createCard('SPADES', '7', 7);
-      state.players[0].hand = [spadeSeven];
+      const cardFour = createCard('HEARTS', '4', 4);
+      state.players[0].hand = [spadeSeven, cardFour];
 
       const result = RegicideEngine.playTurn(state, 'p1', [spadeSeven]);
       expect(result.success).toBe(true);
@@ -436,6 +437,86 @@ describe('RegicideEngine Unit Test Suite', () => {
       const res = RegicideEngine.useSoloJoker(state, 'p1');
       expect(res.success).toBe(false);
       expect(res.message).toBe('errNoSoloJokersLeft');
+    });
+  });
+
+  describe('8. Multiplayer Lobby & Kicked Player Operations', () => {
+    it('allows host to kick a player from the lobby', () => {
+      const state = RegicideEngine.createNewGame(
+        'MULTIPLAYER',
+        [
+          { id: 'host-1', name: 'Host', isHost: true },
+          { id: 'player-2', name: 'Guest', isHost: false },
+        ],
+        'LOBBY1'
+      );
+      expect(state.players.length).toBe(2);
+
+      const res = RegicideEngine.kickPlayerFromLobby(state, 'host-1', 'player-2');
+      expect(res.success).toBe(true);
+      expect(res.nextState.players.length).toBe(1);
+      expect(res.nextState.players.some((p) => p.id === 'player-2')).toBe(false);
+      expect(res.nextState.lastActionLog.some((l) => l.includes('logPlayerKicked'))).toBe(true);
+    });
+
+    it('rejects host kicking themselves or non-host kicking players', () => {
+      const state = RegicideEngine.createNewGame(
+        'MULTIPLAYER',
+        [
+          { id: 'host-1', name: 'Host', isHost: true },
+          { id: 'player-2', name: 'Guest', isHost: false },
+        ],
+        'LOBBY2'
+      );
+
+      const selfKick = RegicideEngine.kickPlayerFromLobby(state, 'host-1', 'host-1');
+      expect(selfKick.success).toBe(false);
+      expect(selfKick.message).toBe('Host cannot kick themselves.');
+
+      const nonHostKick = RegicideEngine.kickPlayerFromLobby(state, 'player-2', 'host-1');
+      expect(nonHostKick.success).toBe(false);
+      expect(nonHostKick.message).toBe('Only the host can kick players.');
+    });
+
+    it('returns isHostLeaving true when host leaves room', () => {
+      const state = RegicideEngine.createNewGame(
+        'MULTIPLAYER',
+        [
+          { id: 'host-1', name: 'Host', isHost: true },
+          { id: 'player-2', name: 'Guest', isHost: false },
+        ],
+        'LOBBY3'
+      );
+
+      const res = RegicideEngine.leavePlayerFromRoom(state, 'host-1');
+      expect(res.isHostLeaving).toBe(true);
+    });
+
+    it('removes non-host player and advances turn when leaving during active turn', () => {
+      const state = RegicideEngine.createNewGame(
+        'MULTIPLAYER',
+        [
+          { id: 'host-1', name: 'Host', isHost: true },
+          { id: 'player-2', name: 'Guest', isHost: false },
+        ],
+        'LOBBY4'
+      );
+      state.status = 'PLAY_CARD';
+      state.currentTurnPlayerId = 'player-2';
+
+      const res = RegicideEngine.leavePlayerFromRoom(state, 'player-2');
+      expect(res.isHostLeaving).toBe(false);
+      expect(res.nextState.players.length).toBe(1);
+      expect(res.nextState.currentTurnPlayerId).toBe('host-1');
+    });
+
+    it('logs logPlayerPassedTimer when turn is passed by timer action', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.status = 'PLAY_CARD';
+
+      const res = RegicideEngine.passTurn(state, 'p1', true);
+      expect(res.success).toBe(true);
+      expect(res.nextState.lastActionLog.some((l) => l.includes('logPlayerPassedTimer'))).toBe(true);
     });
   });
 });

@@ -3,22 +3,30 @@
 import React from 'react';
 import { GameState } from '../types/game';
 import { useI18n } from '../i18n/I18nContext';
-import { Trophy, Skull, RotateCcw } from 'lucide-react';
+import { Trophy, Skull, RotateCcw, PlayCircle } from 'lucide-react';
 
 interface VictoryGameOverModalProps {
   gameState: GameState;
+  activePlayerId?: string;
   onReset: () => void;
+  onRematch?: () => void;
 }
 
 export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
   gameState,
+  activePlayerId,
   onReset,
+  onRematch,
 }) => {
   const { t } = useI18n();
   const isVictory = gameState.status === 'VICTORY';
   const isGameOver = gameState.status === 'GAME_OVER';
 
   if (!isVictory && !isGameOver) return null;
+
+  const isMultiplayer = gameState.mode === 'MULTIPLAYER';
+  const activePlayer = gameState.players.find((p) => p.id === activePlayerId);
+  const isHost = activePlayer?.isHost ?? false;
 
   let medalText = '';
   let medalColor = '';
@@ -76,14 +84,33 @@ export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
           </>
         )}
 
-        <button
-          type="button"
-          onClick={onReset}
-          className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold font-cinzel px-6 py-3 rounded-xl border border-slate-700 text-sm transition-all shadow-lg w-full"
-        >
-          <RotateCcw size={18} />
-          <span>{t('returnToLobby')}</span>
-        </button>
+        <div className="flex flex-col gap-2 w-full">
+          {isMultiplayer && onRematch && (
+            isHost ? (
+              <button
+                type="button"
+                onClick={onRematch}
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black font-cinzel px-6 py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-xl w-full active:scale-[0.99]"
+              >
+                <PlayCircle size={18} />
+                <span>{t('rematchRoom')}</span>
+              </button>
+            ) : (
+              <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 italic text-center animate-pulse">
+                {t('waitingHostRematch')}
+              </div>
+            )
+          )}
+
+          <button
+            type="button"
+            onClick={onReset}
+            className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold font-cinzel px-6 py-3 rounded-xl border border-slate-700 text-xs transition-all shadow-lg w-full"
+          >
+            <RotateCcw size={16} />
+            <span>{t('returnToLobby')}</span>
+          </button>
+        </div>
       </div>
     </div>
   );

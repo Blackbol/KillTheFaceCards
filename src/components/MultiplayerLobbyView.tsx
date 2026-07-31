@@ -3,13 +3,14 @@
 import React, { useState } from 'react';
 import { GameState } from '../types/game';
 import { useI18n } from '../i18n/I18nContext';
-import { Copy, Check, Crown, Users, Clock, Swords, Key } from 'lucide-react';
+import { Copy, Check, Crown, Users, Clock, Swords, Key, UserX, HelpCircle } from 'lucide-react';
 
 interface MultiplayerLobbyViewProps {
   gameState: GameState;
   activePlayerId: string;
   onSetTurnTimer: (seconds: number) => void;
   onStartGame: () => void;
+  onKickPlayer: (targetPlayerId: string) => void;
 }
 
 export const MultiplayerLobbyView: React.FC<MultiplayerLobbyViewProps> = ({
@@ -17,9 +18,11 @@ export const MultiplayerLobbyView: React.FC<MultiplayerLobbyViewProps> = ({
   activePlayerId,
   onSetTurnTimer,
   onStartGame,
+  onKickPlayer,
 }) => {
   const { t } = useI18n();
   const [copied, setCopied] = useState<boolean>(false);
+  const [showTimerSpecs, setShowTimerSpecs] = useState<boolean>(false);
 
   const activePlayer = gameState.players.find((p) => p.id === activePlayerId);
   const isHost = activePlayer?.isHost ?? false;
@@ -38,7 +41,6 @@ export const MultiplayerLobbyView: React.FC<MultiplayerLobbyViewProps> = ({
     { label: t('timerSeconds', { sec: 20 }), seconds: 20 },
     { label: t('timerSeconds', { sec: 25 }), seconds: 25 },
     { label: t('timerSeconds', { sec: 30 }), seconds: 30 },
-    { label: t('timerSeconds', { sec: 60 }), seconds: 60 },
     { label: t('timerSeconds', { sec: 90 }), seconds: 90 },
   ];
 
@@ -98,37 +100,61 @@ export const MultiplayerLobbyView: React.FC<MultiplayerLobbyViewProps> = ({
           {gameState.players.map((player) => (
             <div
               key={player.id}
-              className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold ${player.id === activePlayerId
+              className={`flex items-center justify-between p-3 rounded-xl border text-xs font-semibold ${
+                player.id === activePlayerId
                   ? 'border-amber-400/60 bg-amber-500/10 text-amber-300'
                   : 'border-slate-800 bg-slate-950/60 text-slate-300'
-                }`}
+              }`}
             >
               <div className="flex items-center gap-2 truncate">
                 {player.isHost && <Crown size={14} className="text-amber-400 shrink-0" />}
                 <span className="truncate">{player.name}</span>
               </div>
-              {player.isHost && (
-                <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono shrink-0">
-                  {t('hostBadge')}
-                </span>
-              )}
+
+              <div className="flex items-center gap-2 shrink-0">
+                {player.isHost ? (
+                  <span className="text-[9px] bg-amber-500/20 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded-full uppercase tracking-wider font-mono">
+                    {t('hostBadge')}
+                  </span>
+                ) : isHost ? (
+                  <button
+                    type="button"
+                    onClick={() => onKickPlayer(player.id)}
+                    title={t('kickPlayerTooltip')}
+                    className="p-1 text-slate-500 hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition-colors"
+                  >
+                    <UserX size={16} />
+                  </button>
+                ) : null}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Host Settings: Turn Timer */}
-      {isHost ? (
-        <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-2">
+      {/* Turn Timer Settings Card */}
+      <div className="bg-slate-950/80 border border-slate-800 p-4 rounded-2xl space-y-3">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-bold text-amber-400">
             <Clock size={16} />
             <span>{t('turnTimerLabel')}</span>
           </div>
 
+          <button
+            type="button"
+            onClick={() => setShowTimerSpecs(!showTimerSpecs)}
+            className="flex items-center gap-1 text-[11px] text-amber-400/90 hover:text-amber-300 transition-colors font-semibold"
+          >
+            <HelpCircle size={14} />
+            <span>{t('timerSpecsTitle')}</span>
+          </button>
+        </div>
+
+        {isHost ? (
           <select
             value={gameState.turnTimer?.seconds || 0}
             onChange={(e) => onSetTurnTimer(Number(e.target.value))}
-            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500"
+            className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-amber-500 font-semibold"
           >
             {timerOptions.map((opt) => (
               <option key={opt.seconds} value={opt.seconds}>
@@ -136,12 +162,27 @@ export const MultiplayerLobbyView: React.FC<MultiplayerLobbyViewProps> = ({
               </option>
             ))}
           </select>
-        </div>
-      ) : (
-        <div className="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs text-slate-400 italic text-center animate-pulse">
-          {t('waitingForPlayer')}
-        </div>
-      )}
+        ) : (
+          <div className="text-xs text-slate-200 font-semibold bg-slate-900 px-3 py-2 rounded-xl border border-slate-800">
+            {gameState.turnTimer?.seconds
+              ? t('timerSeconds', { sec: gameState.turnTimer.seconds })
+              : t('unlimitedTimer')}
+          </div>
+        )}
+
+        {/* Timer Specifications Banner */}
+        {showTimerSpecs && (
+          <div className="bg-amber-950/40 border border-amber-500/30 p-3 rounded-xl text-[11px] text-amber-200 space-y-1 animate-fadeIn">
+            <div className="font-bold flex items-center gap-1 text-amber-400">
+              <HelpCircle size={13} />
+              <span>{t('timerSpecsTitle')}</span>
+            </div>
+            <p className="leading-relaxed text-slate-300">
+              {t('timerSpecsDesc')}
+            </p>
+          </div>
+        )}
+      </div>
 
       {/* Start Game Button (Host only) */}
       {isHost && (

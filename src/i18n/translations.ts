@@ -79,7 +79,7 @@ export interface Translations {
   resumeSavedGame: string;
   savedGameDetails: string;
 
-  // Lobby Waiting Room & Pause & Timer
+  // Lobby Waiting Room & Pause & Timer & Kick & Disconnect
   copyCode: string;
   codeCopied: string;
   turnTimerLabel: string;
@@ -90,9 +90,25 @@ export interface Translations {
   startGameBtn: string;
   gamePausedTitle: string;
   gamePausedDesc: string;
+  hostDisconnectedPause: string;
+  playerDisconnectedPause: string;
+  hostDisconnectCountdown: string;
+  playerDisconnectCountdown: string;
+  unpauseByHost: string;
   resumeGame: string;
   pauseGame: string;
   hostBadge: string;
+  kickPlayerTooltip: string;
+  errKickedFromRoom: string;
+  errHostClosedRoom: string;
+  timerSpecsTitle: string;
+  timerSpecsDesc: string;
+  autoPassWarning: string;
+
+  // Rematch & Quota
+  rematchRoom: string;
+  waitingHostRematch: string;
+  errQuotaExceeded: string;
 
   // Suits
   hearts: string;
@@ -117,12 +133,15 @@ export interface Translations {
   logGameStarted: string;
   logShieldIncreased: string;
   logPlayerPlayed: string;
+  logPlayerPlayedTimer: string;
   logEnemyDefeated: string;
   logPerfectExecution: string;
   logNewEnemyRevealed: string;
   logEnemyAttack: string;
   logDiscarded: string;
+  logDiscardedTimer: string;
   logPlayerPassed: string;
+  logPlayerPassedTimer: string;
   logSoloJokerUsed: string;
   logJokerPlayed: string;
   logTurnAssigned: string;
@@ -133,6 +152,10 @@ export interface Translations {
   logShieldBlocked: string;
   logGamePaused: string;
   logGameResumed: string;
+  logPlayerKicked: string;
+  logPlayerLeft: string;
+  logPlayerDisconnectedTimeout: string;
+  logRematchStarted: string;
 
   // Error & Validation translations
   errNoCardsSelected: string;
@@ -226,7 +249,7 @@ export const translations: Record<Language, Translations> = {
     victoryDesc: 'All 12 members of the Royal Court have been slain! The kingdom is freed.',
     gameOver: 'GAME OVER',
     gameOverDesc: "Your party was overwhelmed by the enemy's counter-attack damage.",
-    returnToLobby: 'Return to Lobby',
+    returnToLobby: 'Return to Main Menu',
     goldMedal: 'GOLD MEDAL (0 Jokers Used)',
     silverMedal: 'SILVER MEDAL (1 Joker Used)',
     bronzeMedal: 'BRONZE MEDAL (2 Jokers Used)',
@@ -271,10 +294,25 @@ export const translations: Record<Language, Translations> = {
     playersInLobby: 'Connected Players ({current}/{max})',
     startGameBtn: 'Start Game',
     gamePausedTitle: 'GAME PAUSED',
-    gamePausedDesc: 'The host has paused the game. Waiting for resume...',
+    gamePausedDesc: 'The game is currently paused.',
+    hostDisconnectedPause: 'The host ({name}) disconnected. Game paused waiting for reconnection...',
+    playerDisconnectedPause: '{name} disconnected. Game paused.',
+    hostDisconnectCountdown: 'The host ({name}) disconnected. Closing room in {sec}s...',
+    playerDisconnectCountdown: '{name} disconnected. Removing player in {sec}s...',
+    unpauseByHost: 'Unpause Game (Resume Match)',
     resumeGame: 'Resume Game',
     pauseGame: 'Pause Game',
     hostBadge: 'Host',
+    kickPlayerTooltip: 'Kick player',
+    errKickedFromRoom: 'You were kicked from the room by the host.',
+    errHostClosedRoom: 'The host closed the room. Returned to main menu.',
+    timerSpecsTitle: 'Timer Specifications',
+    timerSpecsDesc: 'When the turn timer expires: if passing is allowed, your turn is automatically passed. If passing is not allowed (or during damage discard), a random card from your hand will be played automatically.',
+    autoPassWarning: 'Auto-pass in {sec}s',
+
+    rematchRoom: 'Rematch (Return to Lobby)',
+    waitingHostRematch: 'Waiting for host to trigger rematch...',
+    errQuotaExceeded: 'Multiplayer mode unavailable. Firebase quota exceeded. Automatic reset at 00:00 UTC.',
 
     hearts: 'Hearts',
     diamonds: 'Diamonds',
@@ -295,12 +333,15 @@ export const translations: Record<Language, Translations> = {
     logGameStarted: 'Game started with {count} player(s). First enemy: {rank} of {suit}',
     logShieldIncreased: 'Spade shield increased by {amount} (Total shield: {total})',
     logPlayerPlayed: '{name} played {cards} dealing {damage} damage.',
+    logPlayerPlayedTimer: '{name}\'s timer expired! Played random card {cards} dealing {damage} damage.',
     logEnemyDefeated: '{rank} of {suit} defeated and discarded.',
     logPerfectExecution: 'PERFECT EXECUTION! {rank} of {suit} placed on top of Tavern deck.',
     logNewEnemyRevealed: 'New enemy revealed: {rank} of {suit}.',
     logEnemyAttack: 'Enemy attacks for {damage} damage! {name} must discard cards to endure.',
     logDiscarded: '{name} discarded {cards} ({value} value). Total: {total}/{required}',
+    logDiscardedTimer: '{name}\'s timer expired! Auto-discarded {cards} ({value} value).',
     logPlayerPassed: '{name} passed their turn.',
+    logPlayerPassedTimer: '{name}\'s turn was automatically passed by the timer.',
     logSoloJokerUsed: '{name} used a Solo Joker! Hand refilled to {count} cards.',
     logJokerPlayed: '{name} played a Joker! {rank}\'s immunity cancelled.',
     logTurnAssigned: 'Turn assigned to {name} following Joker play.',
@@ -311,6 +352,10 @@ export const translations: Record<Language, Translations> = {
     logShieldBlocked: 'Enemy attack completely blocked by shield! Turn passes.',
     logGamePaused: 'Game paused by host ({name}).',
     logGameResumed: 'Game resumed by host ({name}).',
+    logPlayerKicked: '{name} was kicked from the lobby by the host.',
+    logPlayerLeft: '{name} left the room.',
+    logPlayerDisconnectedTimeout: '{name} was removed after 30s disconnection timeout.',
+    logRematchStarted: 'Host triggered a rematch. Returning all players to lobby.',
 
     errNoCardsSelected: 'No cards selected.',
     errJokerAlone: 'Jokers must be played alone.',
@@ -329,7 +374,7 @@ export const translations: Record<Language, Translations> = {
     errCannotPassConsecutive: 'Cannot pass if all other players passed consecutively.',
     errSoloOnlyJoker: 'Solo Joker usage is only valid in Solo mode.',
     errNoSoloJokersLeft: 'No Solo Jokers remaining.',
-    errFirebaseUnavailable: 'Firebase Database is not configured. Please set environment variables.',
+    errFirebaseUnavailable: 'Firebase Database is not configured or unavailable.',
     errRoomNotFound: 'Room not found. Check code.',
     errGameAlreadyStarted: 'Game has already started in this room.',
     errRoomFull: 'Room is full (max 4 players).',
@@ -400,7 +445,7 @@ export const translations: Record<Language, Translations> = {
     victoryDesc: 'Les 12 membres de la Cour Royale ont été vaincus ! Le royaume est libéré.',
     gameOver: 'DÉFAITE',
     gameOverDesc: 'Votre groupe a succombé à la riposte de l’ennemi.',
-    returnToLobby: 'Retour au Salon',
+    returnToLobby: 'Retour au Menu Principal',
     goldMedal: 'MÉDAILLE D’OR (0 Joker utilisé)',
     silverMedal: 'MÉDAILLE D’ARGENT (1 Joker utilisé)',
     bronzeMedal: 'MÉDAILLE DE BRONZE (2 Jokers utilisés)',
@@ -445,10 +490,25 @@ export const translations: Record<Language, Translations> = {
     playersInLobby: 'Joueurs connectés ({current}/{max})',
     startGameBtn: 'Démarrer la Partie',
     gamePausedTitle: 'PARTIE EN PAUSE',
-    gamePausedDesc: 'L’hôte a mis la partie en pause. En attente de la reprise...',
+    gamePausedDesc: 'La partie est actuellement en pause.',
+    hostDisconnectedPause: 'L’hôte ({name}) s’est déconnecté. Partie en pause le temps de sa reconnexion...',
+    playerDisconnectedPause: '{name} s’est déconnecté. Partie en pause.',
+    hostDisconnectCountdown: 'L’hôte ({name}) s’est déconnecté. Fermeture du salon dans {sec}s...',
+    playerDisconnectCountdown: '{name} s’est déconnecté. Retrait du joueur dans {sec}s...',
+    unpauseByHost: 'Reprendre la partie (Lever la pause)',
     resumeGame: 'Reprendre la Partie',
     pauseGame: 'Mettre en Pause',
     hostBadge: 'Hôte',
+    kickPlayerTooltip: 'Exclure le joueur',
+    errKickedFromRoom: 'Vous avez été exclu du salon par l’hôte.',
+    errHostClosedRoom: 'L’hôte a fermé le salon. Retour au menu principal.',
+    timerSpecsTitle: 'Spécifications du Minuteur',
+    timerSpecsDesc: 'Lorsque le minuteur expire : si passer est autorisé, votre tour est automatiquement passé. Si passer est impossible (or durant la défausse de dégâts), une carte aléatoire de votre main sera jouée automatiquement.',
+    autoPassWarning: 'Auto-pass dans {sec}s',
+
+    rematchRoom: 'Rejouer (Retour au Salon)',
+    waitingHostRematch: 'En attente de l’hôte pour rejouer...',
+    errQuotaExceeded: 'Mode multijoueur indisponible. Quota Firebase dépassé. Réinitialisation automatique à 00:00 UTC (02:00 heure de Paris).',
 
     hearts: 'Cœurs',
     diamonds: 'Carreaux',
@@ -469,12 +529,15 @@ export const translations: Record<Language, Translations> = {
     logGameStarted: 'Partie démarrée avec {count} joueur(s). Premier ennemi : {rank} de {suit}',
     logShieldIncreased: 'Bouclier Pique augmenté de {amount} (Bouclier total : {total})',
     logPlayerPlayed: '{name} a joué {cards} infligeant {damage} dégâts.',
+    logPlayerPlayedTimer: 'Le minuteur de {name} a expiré ! Carte aléatoire jouée : {cards} ({damage} dégâts).',
     logEnemyDefeated: '{rank} de {suit} a été vaincu et défaussé.',
     logPerfectExecution: 'EXÉCUTION PARFAITE ! {rank} de {suit} a été placé au-dessus du paquet Taverne.',
     logNewEnemyRevealed: 'Nouvel ennemi révélé : {rank} de {suit}.',
     logEnemyAttack: 'L’ennemi attaque pour {damage} dégâts ! {name} doit défausser des cartes.',
     logDiscarded: '{name} a défaussé {cards} (valeur {value}). Total : {total}/{required}',
+    logDiscardedTimer: 'Le minuteur de {name} a expiré ! Carte aléatoire défaussée : {cards} (valeur {value}).',
     logPlayerPassed: '{name} a passé son tour.',
+    logPlayerPassedTimer: 'Le tour de {name} a été passé automatiquement par le minuteur.',
     logSoloJokerUsed: '{name} a utilisé un Joker Solo ! Main complétée à {count} cartes.',
     logJokerPlayed: '{name} a joué un Joker ! Immunité du {rank} annulée.',
     logTurnAssigned: 'Tour attribué à {name} suite au jeu d’un Joker.',
@@ -485,6 +548,10 @@ export const translations: Record<Language, Translations> = {
     logShieldBlocked: 'Attaque de l’ennemi complètement bloquée par le bouclier ! Le tour passe.',
     logGamePaused: 'Partie mise en pause par l’hôte ({name}).',
     logGameResumed: 'Partie reprise par l’hôte ({name}).',
+    logPlayerKicked: '{name} a été exclu du salon par l’hôte.',
+    logPlayerLeft: '{name} a quitté la partie.',
+    logPlayerDisconnectedTimeout: '{name} a été retiré suite à une déconnexion de 30s.',
+    logRematchStarted: 'L’hôte a relancé un salon. Retour de tous les joueurs dans le salon.',
 
     errNoCardsSelected: 'Aucune carte sélectionnée.',
     errJokerAlone: 'Le Joker doit être joué seul.',
@@ -498,12 +565,12 @@ export const translations: Record<Language, Translations> = {
     errNotWaitingJokerChoice: 'Pas en attente du choix de joueur du Joker.',
     errTargetPlayerNotFound: 'Joueur cible non trouvé.',
     errNotInDiscardPhase: 'Pas en phase de défausse de dégâts.',
-    errCannotPassOutsidePlay: 'Impossible de passer en dehors de la phase de jeu.',
+    errCannotPassOutsidePlay: 'Cannot pass outside play phase.',
     errNotYourTurnPass: 'Ce n’est pas votre tour de passer.',
     errCannotPassConsecutive: 'Impossible de passer si tous les autres joueurs ont déjà passé consécutivement.',
     errSoloOnlyJoker: 'L’utilisation du Joker Solo est réservée au mode Solo.',
     errNoSoloJokersLeft: 'Aucun Joker Solo restant.',
-    errFirebaseUnavailable: 'La base de données Firebase n’est pas configurée.',
+    errFirebaseUnavailable: 'La base de données Firebase n’est pas configurée ou indisponible.',
     errRoomNotFound: 'Salon non trouvé. Vérifiez le code.',
     errGameAlreadyStarted: 'La partie a déjà commencé dans ce salon.',
     errRoomFull: 'Le salon est complet (max 4 joueurs).',
@@ -514,7 +581,7 @@ export const translations: Record<Language, Translations> = {
     rulesEnemiesTitle: 'Les 12 Ennemis Royaux',
     rulesEnemiesDesc: 'Valets : 20 PV / 10 Attaque • Dames : 30 PV / 15 Attaque • Rois : 40 PV / 20 Attaque. Les ennemis sont révélés séquentiellement des Valets jusqu’aux Rois.',
     rulesTurnStructureTitle: 'Déroulement d’un Tour (4 Étapes)',
-    rulesTurnStructureDesc: '1. Jouer une carte (ou combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
+    rulesTurnStructureDesc: '1. Jouer une carte (or combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
     rulesSuitsTitle: 'Pouvoirs des Enseignes (Étape 2)',
     rulesHeartsDesc: '♥️ Cœur (Soin) : Mélange la défausse et remet autant de cartes que la valeur jouée sous le paquet Taverne.',
     rulesDiamondsDesc: '♦️ Carreau (Recruter) : Les joueurs piochent dans la Taverne, un par un dans le sens horaire, jusqu’à leur limite de main.',
@@ -528,10 +595,10 @@ export const translations: Record<Language, Translations> = {
     rulesAcesDesc: 'Un As (valeur 1) peut être joué avec n’importe quelle carte unique pour ajouter +1 dégât et déclencher un 2ème pouvoir ! Le pouvoir Cœur est TOUJOURS résolu AVANT Carreau.',
     rulesExecutionTitle: 'Exécution Parfaite vs Dégâts Excédentaires',
     rulesExecutionDesc: 'Si les PV d’un ennemi tombent à EXACTEMENT 0, l’ennemi est placé FACE CACHÉE AU-DESSUS de la Taverne (carte de renfort !). Si les dégâts sont excédentaires (PV < 0), il va à la Défausse.',
-    rulesCounterTitle: 'Encaisser la Riposte Ennemie (Étape 4)',
-    rulesCounterDesc: 'Si l’ennemi n’est pas vaincu, le joueur actif doit défausser des cartes de sa main au moins égales à l’attaque nette de l’ennemi (Atk moins boucliers). Ne pas pouvoir défausser la somme requise provoque la Défaite.',
-    rulesPassingTitle: 'Passer son Tour',
-    rulesPassingDesc: 'Un joueur peut passer son tour (sauf si tous les autres joueurs ont déjà passé consécutivement). Passer saute les étapes 2 & 3, mais le joueur DOIT tout de même subir la riposte à l’étape 4 !',
-    close: 'Fermer',
+    rulesCounterTitle: 'Enduring Counter-Attack (Step 4)',
+    rulesCounterDesc: 'If the enemy is not slain, the active player must discard cards from hand totaling >= net enemy attack (Base Atk minus Spade shield). Failing to discard enough causes Game Over.',
+    rulesPassingTitle: 'Passing Turn',
+    rulesPassingDesc: 'A player may pass their turn (unless all other players passed consecutively). Passing skips Step 2 & 3, but the player MUST still endure the enemy counter-attack in Step 4!',
+    close: 'Close',
   },
 };
