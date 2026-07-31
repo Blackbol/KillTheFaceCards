@@ -91,6 +91,7 @@ describe('RegicideEngine Unit Test Suite', () => {
       const result = RegicideEngine.validatePlayedCards(pairOfSixes);
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('errComboMaxSum');
+      expect(result.params?.sum).toBe(12);
     });
 
     it('rejects playing Jokers with other cards', () => {
@@ -101,6 +102,17 @@ describe('RegicideEngine Unit Test Suite', () => {
       const result = RegicideEngine.validatePlayedCards(jokerPlusCard);
       expect(result.valid).toBe(false);
       expect(result.reason).toBe('errJokerAlone');
+    });
+
+    it('rejects Ace paired with multiple non-Ace cards', () => {
+      const invalidAceCombo = [
+        createCard('HEARTS', 'A', 1),
+        createCard('DIAMONDS', '4', 4),
+        createCard('SPADES', '4', 4),
+      ];
+      const result = RegicideEngine.validatePlayedCards(invalidAceCombo);
+      expect(result.valid).toBe(false);
+      expect(result.reason).toBe('errAceComboInvalid');
     });
   });
 
@@ -261,15 +273,12 @@ describe('RegicideEngine Unit Test Suite', () => {
         isImmunityCancelled: false,
       };
 
-      // Play 10 of Clubs (deals 20 damage, but enemy HP is 10, wait: 10 of Clubs is Clubs (2x dmg) -> 20 dmg -> Overkill!)
-      // To get exact 10 damage: play 10 of Spades (10 dmg, no multiplier)
       const spadeTen = createCard('SPADES', '10', 10);
       state.players[0].hand = [spadeTen];
 
       const result = RegicideEngine.playTurn(state, 'p1', [spadeTen]);
       expect(result.success).toBe(true);
 
-      // Defeated enemy card is on top of Tavern deck!
       const topTavernCard = result.nextState.tavernDeck[result.nextState.tavernDeck.length - 1];
       expect(topTavernCard.rank).toBe('J');
       expect(topTavernCard.value).toBe(10);
@@ -298,9 +307,31 @@ describe('RegicideEngine Unit Test Suite', () => {
       const discardedEnemy = result.nextState.discardPile.find((c) => c.rank === 'J');
       expect(discardedEnemy).toBeDefined();
     });
+
+    it('triggers VICTORY when 12th King is slain', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.castleDeck = []; // No more remaining enemies
+      state.currentEnemy = {
+        id: 'final-king',
+        rank: 'KING',
+        suit: 'HEARTS',
+        maxHp: 40,
+        currentHp: 10,
+        attack: 20,
+        currentShield: 0,
+        isImmunityCancelled: false,
+      };
+
+      const tenCard = createCard('SPADES', '10', 10);
+      state.players[0].hand = [tenCard];
+
+      const result = RegicideEngine.playTurn(state, 'p1', [tenCard]);
+      expect(result.success).toBe(true);
+      expect(result.nextState.status).toBe('VICTORY');
+    });
   });
 
-  describe('6. Passing Restrictions & Consecutive Passes', () => {
+  describe('6. Passing Restrictions & Step 4 Counter-Attack', () => {
     it('allows a player to pass', () => {
       const state = RegicideEngine.createNewGame('MULTIPLAYER', [
         { id: 'p1', name: 'Alice', isHost: true },
@@ -318,21 +349,91 @@ describe('RegicideEngine Unit Test Suite', () => {
         { id: 'p2', name: 'Bob', isHost: false },
       ], 'TEST');
 
-      // Set enemy shield to 10 so passing deals 0 damage and turn advances immediately
       if (state.currentEnemy) {
         state.currentEnemy.currentShield = 10;
       }
 
-      // Player 1 passes (effective attack 0 -> turn passes to Player 2 in PLAY_CARD phase)
       const res1 = RegicideEngine.passTurn(state, 'p1');
       expect(res1.success).toBe(true);
       expect(res1.nextState.currentTurnPlayerId).toBe('p2');
-      expect(res1.nextState.status).toBe('PLAY_CARD');
 
-      // Player 2 tries to pass, but Player 1 already passed consecutively!
       const res2 = RegicideEngine.passTurn(res1.nextState, 'p2');
       expect(res2.success).toBe(false);
       expect(res2.message).toBe('errCannotPassConsecutive');
+    });
+
+    it('skips discard phase if Spade shield completely blocks enemy attack', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.currentEnemy = {
+        id: 'jack-blocked',
+        rank: 'JACK',
+        suit: 'HEARTS',
+        maxHp: 20,
+        currentHp: 15,
+        attack: 10,
+        currentShield: 10, // Full shield equal to attack!
+        isImmunityCancelled: false,
+      };
+
+      const res = RegicideEngine.passTurn(state, 'p1');
+      expect(res.success).toBe(true);
+      // Net damage is 0, so discard phase is skipped!
+      expect(res.nextState.status).toBe('PLAY_CARD');
+    });
+
+    it('allows batch discarding multiple cards to fulfill required damage', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.status = 'DISCARD_DAMAGE';
+      state.pendingDamage = 10;
+      state.discardedDamageSum = 0;
+
+      const card4 = createCard('SPADES', '4', 4);
+      const card6 = createCard('HEARTS', '6', 6);
+      state.players[0].hand = [card4, card6];
+
+      const res = RegicideEngine.discardForDamage(state, 'p1', [card4.id, card6.id]);
+      expect(res.success).toBe(true);
+      expect(res.nextState.status).toBe('PLAY_CARD');
+      expect(res.nextState.pendingDamage).toBe(0);
+    });
+
+    it('triggers GAME_OVER if player discards entire hand without reaching required damage', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.status = 'DISCARD_DAMAGE';
+      state.pendingDamage = 15;
+      state.discardedDamageSum = 0;
+
+      const card3 = createCard('SPADES', '3', 3);
+      state.players[0].hand = [card3];
+
+      const res = RegicideEngine.discardForDamage(state, 'p1', [card3.id]);
+      expect(res.success).toBe(true);
+      expect(res.nextState.status).toBe('GAME_OVER');
+    });
+  });
+
+  describe('7. Regicide Solo Mode Special Rules', () => {
+    it('allows Solo Joker to refill player hand up to 8 cards and increments usedCount', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      expect(state.soloJokers.availableCount).toBe(2);
+      expect(state.soloJokers.usedCount).toBe(0);
+
+      state.players[0].hand = [createCard('HEARTS', '2', 2)];
+
+      const res = RegicideEngine.useSoloJoker(state, 'p1');
+      expect(res.success).toBe(true);
+      expect(res.nextState.soloJokers.availableCount).toBe(1);
+      expect(res.nextState.soloJokers.usedCount).toBe(1);
+      expect(res.nextState.players[0].hand.length).toBe(8);
+    });
+
+    it('rejects using Solo Joker when 0 jokers remain', () => {
+      const state = RegicideEngine.createNewGame('SOLO', [{ id: 'p1', name: 'Alice', isHost: true }], 'TEST');
+      state.soloJokers.availableCount = 0;
+
+      const res = RegicideEngine.useSoloJoker(state, 'p1');
+      expect(res.success).toBe(false);
+      expect(res.message).toBe('errNoSoloJokersLeft');
     });
   });
 });

@@ -479,7 +479,7 @@ export class RegicideEngine {
     }
 
     if (state.soloJokers.availableCount <= 0) {
-      return { success: false, message: 'No Solo Jokers remaining.', nextState: state };
+      return { success: false, message: 'errNoSoloJokersLeft', nextState: state };
     }
 
     const nextState: GameState = JSON.parse(JSON.stringify(state));
