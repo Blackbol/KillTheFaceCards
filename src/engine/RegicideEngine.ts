@@ -217,10 +217,18 @@ export class RegicideEngine {
       nextState.lastActionLog.push(this.log('logShieldBlocked'));
       this.advanceToNextTurn(nextState);
     } else {
-      nextState.status = 'DISCARD_DAMAGE';
-      nextState.pendingDamage = effectiveEnemyAttack;
-      nextState.discardedDamageSum = 0;
+      const playerHandValue = player.hand.reduce((sum, c) => sum + c.value, 0);
       nextState.lastActionLog.push(this.log('logEnemyAttack', { damage: effectiveEnemyAttack, name: player.name }));
+
+      if (playerHandValue < effectiveEnemyAttack) {
+        nextState.status = 'GAME_OVER';
+        nextState.pendingDamage = effectiveEnemyAttack;
+        nextState.lastActionLog.push(this.log('logGameOver', { name: player.name }));
+      } else {
+        nextState.status = 'DISCARD_DAMAGE';
+        nextState.pendingDamage = effectiveEnemyAttack;
+        nextState.discardedDamageSum = 0;
+      }
     }
 
     nextState.updatedAt = Date.now();
@@ -420,7 +428,8 @@ export class RegicideEngine {
       return { success: true, message: 'Damage successfully endured.', nextState };
     }
 
-    if (player.hand.length === 0 && nextState.discardedDamageSum < nextState.pendingDamage) {
+    const remainingHandValue = player.hand.reduce((sum, c) => sum + c.value, 0);
+    if (nextState.discardedDamageSum + remainingHandValue < nextState.pendingDamage) {
       nextState.status = 'GAME_OVER';
       nextState.lastActionLog.push(this.log('logGameOver', { name: player.name }));
       nextState.updatedAt = Date.now();
@@ -434,7 +443,7 @@ export class RegicideEngine {
   /**
    * Handles player passing their turn.
    */
-  public static passTurn(state: GameState, playerId: string): ActionResult {
+  public static passTurn(state: GameState, playerId: string, isTimerAction = false): ActionResult {
     if (state.status !== 'PLAY_CARD') {
       return { success: false, message: 'errCannotPassOutsidePlay', nextState: state };
     }
@@ -455,7 +464,8 @@ export class RegicideEngine {
 
     const player = nextState.players.find((p) => p.id === playerId);
     nextState.consecutivePassCount++;
-    nextState.lastActionLog.push(this.log('logPlayerPassed', { name: player?.name || 'Player' }));
+    const logKey = isTimerAction ? 'logPlayerPassedTimer' : 'logPlayerPassed';
+    nextState.lastActionLog.push(this.log(logKey, { name: player?.name || 'Player' }));
 
     const effectiveEnemyAttack = Math.max(0, enemy.attack - enemy.currentShield);
 
@@ -463,9 +473,18 @@ export class RegicideEngine {
       nextState.lastActionLog.push(this.log('logShieldBlocked'));
       this.advanceToNextTurn(nextState);
     } else {
-      nextState.status = 'DISCARD_DAMAGE';
-      nextState.pendingDamage = effectiveEnemyAttack;
-      nextState.discardedDamageSum = 0;
+      const playerHandValue = player?.hand ? player.hand.reduce((sum, c) => sum + c.value, 0) : 0;
+      nextState.lastActionLog.push(this.log('logEnemyAttack', { damage: effectiveEnemyAttack, name: player?.name || 'Player' }));
+
+      if (playerHandValue < effectiveEnemyAttack) {
+        nextState.status = 'GAME_OVER';
+        nextState.pendingDamage = effectiveEnemyAttack;
+        nextState.lastActionLog.push(this.log('logGameOver', { name: player?.name || 'Player' }));
+      } else {
+        nextState.status = 'DISCARD_DAMAGE';
+        nextState.pendingDamage = effectiveEnemyAttack;
+        nextState.discardedDamageSum = 0;
+      }
     }
 
     nextState.updatedAt = Date.now();
@@ -665,5 +684,90 @@ export class RegicideEngine {
     }
     nextState.updatedAt = Date.now();
     return { success: true, message: 'Game started!', nextState };
+  }
+
+  /**
+   * Kicks a player from the lobby (Host only).
+   */
+  public static kickPlayerFromLobby(
+    state: GameState,
+    hostPlayerId: string,
+    targetPlayerId: string
+  ): ActionResult {
+    const host = state.players.find((p) => p.id === hostPlayerId);
+    if (!host || !host.isHost) {
+      return { success: false, message: 'Only the host can kick players.', nextState: state };
+    }
+    if (hostPlayerId === targetPlayerId) {
+      return { success: false, message: 'Host cannot kick themselves.', nextState: state };
+    }
+    const nextState: GameState = JSON.parse(JSON.stringify(state));
+    const targetPlayer = nextState.players.find((p) => p.id === targetPlayerId);
+    nextState.players = nextState.players.filter((p) => p.id !== targetPlayerId);
+    if (targetPlayer) {
+      nextState.lastActionLog.push(
+        this.log('logPlayerKicked', { name: targetPlayer.name })
+      );
+    }
+    nextState.updatedAt = Date.now();
+    return { success: true, message: 'Player kicked.', nextState };
+  }
+
+  /**
+   * Resets game state back to LOBBY for a rematch with same connected players (Host only).
+   */
+  public static rematchInRoom(state: GameState, hostPlayerId: string): ActionResult {
+    const host = state.players.find((p) => p.id === hostPlayerId);
+    if (!host || !host.isHost) {
+      return { success: false, message: 'Only the host can start a rematch.', nextState: state };
+    }
+    const nextState = this.createNewGame(state.mode, state.players, state.roomId);
+    nextState.status = 'LOBBY';
+    if (state.turnTimer) {
+      nextState.turnTimer = state.turnTimer;
+    }
+    nextState.lastActionLog.push(this.log('logRematchStarted'));
+    nextState.updatedAt = Date.now();
+    return { success: true, message: 'Rematch initiated. Returned to lobby.', nextState };
+  }
+
+  /**
+   * Handles player leaving game/room. If host leaves, closes room.
+   */
+  public static leavePlayerFromRoom(
+    state: GameState,
+    leavingPlayerId: string
+  ): { isHostLeaving: boolean; nextState: GameState } {
+    const playerIndex = state.players.findIndex((p) => p.id === leavingPlayerId);
+    if (playerIndex === -1) {
+      return { isHostLeaving: false, nextState: state };
+    }
+
+    const player = state.players[playerIndex];
+    if (player.isHost) {
+      return { isHostLeaving: true, nextState: state };
+    }
+
+    const isTurnOfLeavingPlayer = state.currentTurnPlayerId === leavingPlayerId;
+    const nextState: GameState = JSON.parse(JSON.stringify(state));
+    nextState.players = nextState.players.filter((p) => p.id !== leavingPlayerId);
+    nextState.lastActionLog.push(this.log('logPlayerLeft', { name: player.name }));
+
+    // If leaving player was the active turn player, advance turn to the next player in sequence
+    if (isTurnOfLeavingPlayer && nextState.players.length > 0) {
+      const nextTurnIdx = playerIndex % nextState.players.length;
+      const nextPlayer = nextState.players[nextTurnIdx];
+      nextState.currentTurnPlayerId = nextPlayer.id;
+      nextState.consecutivePassCount = 0;
+      if (nextState.status === 'DISCARD_DAMAGE' || nextState.status === 'YIELD_JOKER_CHOICE') {
+        nextState.status = 'PLAY_CARD';
+        nextState.pendingDamage = 0;
+        nextState.discardedDamageSum = 0;
+      }
+      nextState.lastActionLog.push(this.log('logTurnAssigned', { name: nextPlayer.name }));
+    }
+
+    nextState.updatedAt = Date.now();
+    return { isHostLeaving: false, nextState };
   }
 }

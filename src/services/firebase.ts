@@ -8,13 +8,13 @@ import {
   get,
   onValue,
   off,
-  remove,
+  onDisconnect,
   Database
 } from 'firebase/database';
 import { GameMode, GameState } from '../types/game';
 import { RegicideEngine } from '../engine/RegicideEngine';
+import { debugLog, debugWarn } from '../utils/debug';
 
-// Firebase configuration loaded strictly from environment variables (.env)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
@@ -28,9 +28,6 @@ const firebaseConfig = {
 let appInstance: FirebaseApp | null = null;
 let dbInstance: Database | null = null;
 
-/**
- * Wraps a promise with a timeout limit (e.g. 5 seconds).
- */
 function withTimeout<T>(promise: Promise<T>, ms = 5000, errorMsg = 'Firebase operation timed out.'): Promise<T> {
   return Promise.race([
     promise,
@@ -40,21 +37,16 @@ function withTimeout<T>(promise: Promise<T>, ms = 5000, errorMsg = 'Firebase ope
   ]);
 }
 
-/**
- * Safely retrieves or initializes the Firebase Realtime Database instance.
- * Returns null if environment variables are not configured or contain placeholders.
- */
 export function getDatabaseInstance(): Database | null {
   if (dbInstance) return dbInstance;
 
-  // Check if databaseURL & apiKey are configured and not placeholders
   if (
     !firebaseConfig.databaseURL ||
     !firebaseConfig.apiKey ||
     firebaseConfig.apiKey.includes('your_') ||
     firebaseConfig.databaseURL.includes('your_')
   ) {
-    console.info('[Firebase] No valid remote credentials found in environment. Running in offline mode.');
+    debugWarn('FIREBASE', 'Running in offline mode.');
     return null;
   }
 
@@ -65,16 +57,14 @@ export function getDatabaseInstance(): Database | null {
       appInstance = getApps()[0];
     }
     dbInstance = getDatabase(appInstance);
+    debugLog('FIREBASE', 'Database initialized successfully.');
     return dbInstance;
   } catch (error) {
-    console.warn('[Firebase] Initialization error:', error);
+    debugWarn('FIREBASE', 'Initialization error:', error);
     return null;
   }
 }
 
-/**
- * Generates a random 4-letter uppercase room code (e.g. "KNGS", "RGC1").
- */
 export function generateRoomCode(): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   let result = '';
@@ -84,9 +74,6 @@ export function generateRoomCode(): string {
   return result;
 }
 
-/**
- * Creates a new multiplayer room in Firebase RTDB.
- */
 export async function createRoom(
   hostName: string,
   mode: GameMode = 'MULTIPLAYER'
@@ -96,30 +83,48 @@ export async function createRoom(
     throw new Error('errFirebaseUnavailable');
   }
 
-  const roomId = generateRoomCode();
-  const hostId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+  let roomId = generateRoomCode();
+  let attempts = 0;
+  while (attempts < 5) {
+    try {
+      const roomRef = ref(db, `rooms/${roomId}`);
+      const existing = await withTimeout(get(roomRef), 3000, 'errFirebaseUnavailable');
+      if (!existing.exists()) {
+        break;
+      }
+    } catch (err: any) {
+      debugWarn('FIREBASE', 'Room collision check error:', err);
+      if (err.message && (err.message.includes('QUOTA') || err.message.includes('PERMISSION'))) {
+        throw new Error('errQuotaExceeded');
+      }
+    }
+    roomId = generateRoomCode();
+    attempts++;
+  }
 
+  const hostId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
   const playerConfigs = [{ id: hostId, name: hostName, isHost: true }];
   const initialState = RegicideEngine.createNewGame(mode, playerConfigs, roomId);
 
   try {
     const roomRef = ref(db, `rooms/${roomId}`);
     await withTimeout(set(roomRef, initialState), 5000, 'errFirebaseUnavailable');
-  } catch (err) {
-    console.warn('[Firebase] Could not push room to remote database:', err);
+    debugLog('ROOM', `Created room ${roomId} for host ${hostName} (${hostId})`);
+  } catch (err: any) {
+    debugWarn('FIREBASE', 'Could not push room to remote database:', err);
+    if (err.message && (err.message.includes('QUOTA') || err.message.includes('PERMISSION'))) {
+      throw new Error('errQuotaExceeded');
+    }
     throw new Error('errFirebaseUnavailable');
   }
 
   return { roomId, playerId: hostId, initialState };
 }
 
-/**
- * Joins an existing multiplayer room by code.
- */
 export async function joinRoom(
   roomId: string,
   playerName: string
-): Promise<{ success: boolean; playerId?: string; error?: string }> {
+): Promise<{ success: boolean; playerId?: string; joinedState?: GameState; error?: string }> {
   const db = getDatabaseInstance();
   if (!db) {
     return { success: false, error: 'errFirebaseUnavailable' };
@@ -152,16 +157,17 @@ export async function joinRoom(
 
     const updatedState = RegicideEngine.createNewGame(state.mode, updatedPlayers, cleanRoomId);
     await withTimeout(set(roomRef, updatedState), 5000, 'errFirebaseUnavailable');
+    debugLog('ROOM', `Player ${playerName} (${playerId}) joined room ${cleanRoomId}`);
 
-    return { success: true, playerId };
+    return { success: true, playerId, joinedState: updatedState };
   } catch (err: any) {
+    if (err.message && (err.message.includes('QUOTA') || err.message.includes('PERMISSION'))) {
+      return { success: false, error: 'errQuotaExceeded' };
+    }
     return { success: false, error: err.message || 'errFirebaseUnavailable' };
   }
 }
 
-/**
- * Subscribes to real-time updates for a room via Firebase RTDB onValue listener.
- */
 export function subscribeToRoom(
   roomId: string,
   callback: (state: GameState | null) => void
@@ -173,8 +179,27 @@ export function subscribeToRoom(
 
   const unsubscribe = onValue(roomRef, (snapshot) => {
     if (snapshot.exists()) {
-      callback(snapshot.val() as GameState);
+      const rawState = snapshot.val() as GameState & { presence?: Record<string, { isConnected: boolean; disconnectedAt?: number }> };
+      const presenceDict = rawState.presence || {};
+
+      if (rawState.players) {
+        rawState.players = rawState.players.map((p) => {
+          const pres = presenceDict[p.id];
+          if (pres) {
+            return {
+              ...p,
+              isConnected: pres.isConnected ?? true,
+              disconnectedAt: pres.disconnectedAt,
+            };
+          }
+          return { ...p, isConnected: p.isConnected ?? true };
+        });
+      }
+
+      debugLog('SYNC', `Room state update for ${roomId}: status=${rawState.status}, players=${rawState.players?.length}`);
+      callback(rawState);
     } else {
+      debugWarn('SYNC', `Room ${roomId} no longer exists in database.`);
       callback(null);
     }
   });
@@ -184,9 +209,6 @@ export function subscribeToRoom(
   };
 }
 
-/**
- * Updates game state in Firebase RTDB.
- */
 export async function pushGameState(roomId: string, newState: GameState): Promise<void> {
   const db = getDatabaseInstance();
   if (!db) return;
@@ -196,18 +218,36 @@ export async function pushGameState(roomId: string, newState: GameState): Promis
 }
 
 /**
- * Clean up room if game is over or inactive > 3 hours.
+ * Registers player connection presence using keyed path rooms/${roomId}/presence/${playerId}.
  */
-export async function cleanupRoomIfStale(roomId: string, state: GameState): Promise<void> {
+export function registerPlayerPresence(roomId: string, playerId: string): () => void {
   const db = getDatabaseInstance();
-  if (!db) return;
+  if (!db) return () => {};
 
-  const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
-  const isStale = Date.now() - (state.updatedAt || state.createdAt) > THREE_HOURS_MS;
-  const isFinished = state.status === 'VICTORY' || state.status === 'GAME_OVER';
+  const cleanRoomId = roomId.toUpperCase();
+  const connectedRef = ref(db, '.info/connected');
+  const playerPresenceRef = ref(db, `rooms/${cleanRoomId}/presence/${playerId}`);
+  const pauseRef = ref(db, `rooms/${cleanRoomId}/isPaused`);
 
-  if (isStale || isFinished) {
-    const roomRef = ref(db, `rooms/${roomId.toUpperCase()}`);
-    await remove(roomRef);
-  }
+  const unsubscribe = onValue(connectedRef, async (snap) => {
+    if (snap.val() === true) {
+      debugLog('PRESENCE', `Player ${playerId} online in room ${cleanRoomId}`);
+      await set(playerPresenceRef, { isConnected: true, updatedMs: Date.now() });
+
+      onDisconnect(playerPresenceRef).set({ isConnected: false, disconnectedAt: Date.now() });
+
+      const roomRef = ref(db, `rooms/${cleanRoomId}`);
+      const roomSnap = await get(roomRef);
+      if (roomSnap.exists()) {
+        const state: GameState = roomSnap.val();
+        if (state.status !== 'LOBBY') {
+          onDisconnect(pauseRef).set(true);
+        }
+      }
+    }
+  });
+
+  return () => {
+    off(connectedRef, 'value', unsubscribe);
+  };
 }
