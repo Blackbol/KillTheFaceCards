@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Card } from '../types/game';
+import { Card, Rank } from '../types/game';
 import { SuitBadge } from './SuitBadge';
+import { useI18n } from '../i18n/I18nContext';
 
 interface CardViewProps {
   card: Card;
@@ -20,7 +21,28 @@ export const CardView: React.FC<CardViewProps> = ({
   disabled = false,
   compact = false,
 }) => {
+  const { t } = useI18n();
   const isCourt = ['J', 'Q', 'K'].includes(card.rank);
+
+  /**
+   * Helper to format card face rank letters according to active language (e.g. V/D/R in French).
+   */
+  const getDisplayRank = (rank: Rank): string => {
+    switch (rank) {
+      case 'J':
+        return t('rankJackDisplay');
+      case 'Q':
+        return t('rankQueenDisplay');
+      case 'K':
+        return t('rankKingDisplay');
+      case 'A':
+        return t('rankAceDisplay');
+      default:
+        return rank;
+    }
+  };
+
+  const displayRank = getDisplayRank(card.rank);
 
   return (
     <motion.button
@@ -45,7 +67,7 @@ export const CardView: React.FC<CardViewProps> = ({
       {/* Top Rank & Suit */}
       <div className="flex items-center justify-between font-bold tracking-tight">
         <span className={`${card.isJoker ? 'text-purple-300' : 'text-slate-100'} text-base sm:text-lg font-cinzel`}>
-          {card.rank}
+          {displayRank}
         </span>
         <SuitBadge suit={card.suit} size={compact ? 14 : 18} />
       </div>
@@ -63,7 +85,7 @@ export const CardView: React.FC<CardViewProps> = ({
             </span>
             {isCourt && (
               <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold mt-0.5">
-                Court
+                {t('court')}
               </span>
             )}
           </div>
@@ -72,7 +94,7 @@ export const CardView: React.FC<CardViewProps> = ({
 
       {/* Bottom Rank inverted */}
       <div className="flex items-center justify-between rotate-180 opacity-70">
-        <span className="font-bold font-cinzel text-xs">{card.rank}</span>
+        <span className="font-bold font-cinzel text-xs">{displayRank}</span>
         <SuitBadge suit={card.suit} size={12} />
       </div>
     </motion.button>

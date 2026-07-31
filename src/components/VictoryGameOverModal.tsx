@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { GameState } from '../types/game';
+import { useI18n } from '../i18n/I18nContext';
 import { Trophy, Skull, RotateCcw } from 'lucide-react';
 
 interface VictoryGameOverModalProps {
@@ -13,25 +14,25 @@ export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
   gameState,
   onReset,
 }) => {
+  const { t } = useI18n();
   const isVictory = gameState.status === 'VICTORY';
   const isGameOver = gameState.status === 'GAME_OVER';
 
   if (!isVictory && !isGameOver) return null;
 
-  // Calculate Solo Medal
   let medalText = '';
   let medalColor = '';
 
   if (isVictory && gameState.mode === 'SOLO') {
     const usedJokers = gameState.soloJokers.usedCount;
     if (usedJokers === 0) {
-      medalText = 'GOLD MEDAL (0 Jokers Used)';
+      medalText = t('goldMedal');
       medalColor = 'text-amber-400 border-amber-500/50 bg-amber-950/40';
     } else if (usedJokers === 1) {
-      medalText = 'SILVER MEDAL (1 Joker Used)';
+      medalText = t('silverMedal');
       medalColor = 'text-slate-300 border-slate-400/50 bg-slate-900/60';
     } else {
-      medalText = 'BRONZE MEDAL (2 Jokers Used)';
+      medalText = t('bronzeMedal');
       medalColor = 'text-orange-400 border-orange-600/50 bg-orange-950/40';
     }
   }
@@ -46,10 +47,10 @@ export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
             </div>
             <div className="space-y-2">
               <h2 className="text-3xl font-black font-cinzel text-amber-400 tracking-wider">
-                VICTORY!
+                {t('victory')}
               </h2>
               <p className="text-xs text-slate-300">
-                All 12 members of the Royal Court have been slain! The kingdom is freed.
+                {t('victoryDesc')}
               </p>
             </div>
 
@@ -66,10 +67,10 @@ export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
             </div>
             <div className="space-y-2">
               <h2 className="text-3xl font-black font-cinzel text-rose-500 tracking-wider">
-                GAME OVER
+                {t('gameOver')}
               </h2>
               <p className="text-xs text-slate-400">
-                Your party was overwhelmed by the enemy's counter-attack damage.
+                {t('gameOverDesc')}
               </p>
             </div>
           </>
@@ -81,7 +82,7 @@ export const VictoryGameOverModal: React.FC<VictoryGameOverModalProps> = ({
           className="flex items-center justify-center gap-2 bg-slate-800 hover:bg-slate-700 text-slate-100 font-bold font-cinzel px-6 py-3 rounded-xl border border-slate-700 text-sm transition-all shadow-lg w-full"
         >
           <RotateCcw size={18} />
-          <span>Return to Lobby</span>
+          <span>{t('returnToLobby')}</span>
         </button>
       </div>
     </div>

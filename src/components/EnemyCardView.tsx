@@ -4,6 +4,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { Enemy } from '../types/game';
 import { SuitBadge } from './SuitBadge';
+import { useI18n } from '../i18n/I18nContext';
 import { Shield, Swords, Ban, Sparkles } from 'lucide-react';
 
 interface EnemyCardViewProps {
@@ -11,15 +12,20 @@ interface EnemyCardViewProps {
 }
 
 export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
+  const { t } = useI18n();
+
   if (!enemy) {
     return (
       <div className="w-56 h-80 sm:w-64 sm:h-96 rounded-2xl border-2 border-dashed border-slate-700/60 bg-slate-950/40 flex flex-col items-center justify-center text-slate-500 gap-3 p-6 text-center">
         <Sparkles size={40} className="text-amber-500/40 animate-pulse" />
-        <span className="font-cinzel text-lg font-bold text-slate-400">All Enemies Slain!</span>
-        <span className="text-xs">Victory achieved against the Royal Court.</span>
+        <span className="font-cinzel text-lg font-bold text-slate-400">{t('allEnemiesSlain')}</span>
+        <span className="text-xs">{t('victoryDesc')}</span>
       </div>
     );
   }
+
+  const enemyRankTranslated =
+    enemy.rank === 'JACK' ? t('jack') : enemy.rank === 'QUEEN' ? t('queen') : t('king');
 
   const hpPercent = Math.max(0, Math.min(100, (enemy.currentHp / enemy.maxHp) * 100));
 
@@ -33,7 +39,7 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
       <div className="flex items-center justify-between border-b border-slate-800 pb-3">
         <div className="flex items-center gap-2">
           <span className="text-2xl font-black font-cinzel text-amber-400 tracking-wider">
-            {enemy.rank}
+            {enemyRankTranslated}
           </span>
           <SuitBadge suit={enemy.suit} size={22} showText />
         </div>
@@ -58,12 +64,12 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
         {enemy.isImmunityCancelled ? (
           <div className="flex items-center gap-1.5 bg-emerald-950/60 border border-emerald-700/50 text-emerald-300 text-xs font-semibold px-3 py-1 rounded-full">
             <Sparkles size={14} />
-            <span>Immunity Cancelled (Joker)</span>
+            <span>{t('immunityCancelled')}</span>
           </div>
         ) : (
           <div className="flex items-center gap-1.5 bg-slate-900/90 border border-rose-900/40 text-rose-400 text-xs font-medium px-3 py-1 rounded-full">
             <Ban size={14} />
-            <span>Immune to <SuitBadge suit={enemy.suit} size={14} /></span>
+            <span>{t('immuneTo')} <SuitBadge suit={enemy.suit} size={14} showText /></span>
           </div>
         )}
 
@@ -71,7 +77,12 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
         {enemy.currentShield > 0 && (
           <div className="flex items-center gap-1.5 bg-blue-950/70 border border-blue-600/50 text-blue-300 text-xs font-bold px-3 py-1 rounded-full shadow-md animate-pulse">
             <Shield size={14} className="fill-blue-500/20" />
-            <span>Shield Active: -{enemy.currentShield} Atk (Net Atk: {Math.max(0, enemy.attack - enemy.currentShield)})</span>
+            <span>
+              {t('shieldActive', {
+                shield: enemy.currentShield,
+                net: Math.max(0, enemy.attack - enemy.currentShield),
+              })}
+            </span>
           </div>
         )}
       </div>
@@ -79,9 +90,9 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
       {/* Bottom Health Bar */}
       <div className="space-y-1.5">
         <div className="flex justify-between text-xs font-bold tracking-wide">
-          <span className="text-slate-400">Health Points</span>
+          <span className="text-slate-400">{t('healthPoints')}</span>
           <span className="text-emerald-400">
-            {enemy.currentHp} / {enemy.maxHp} HP
+            {enemy.currentHp} / {enemy.maxHp} {t('hpUnit')}
           </span>
         </div>
         <div className="h-3 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800 p-0.5">

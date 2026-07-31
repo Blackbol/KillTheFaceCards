@@ -16,6 +16,9 @@ export interface Translations {
   joinRoom: string;
   playerName: string;
   playerPlaceholder: string;
+  defaultSoloName: string;
+  defaultHostName: string;
+  defaultJoinName: string;
   roomCode: string;
   roomCodePlaceholder: string;
   tavernDeck: string;
@@ -41,7 +44,8 @@ export interface Translations {
   goldMedal: string;
   silverMedal: string;
   bronzeMedal: string;
-  cards: string;
+  cardSingular: string;
+  cardPlural: string;
   waitingForPlayer: string;
   leaveGame: string;
   noCardsPlayed: string;
@@ -55,10 +59,75 @@ export interface Translations {
   immuneTo: string;
   shieldActive: string;
   healthPoints: string;
+  hpUnit: string;
   allEnemiesSlain: string;
   legalFooter: string;
   regicideDesignBy: string;
   noOfficialArt: string;
+  court: string;
+  connecting: string;
+  handLimitsInfo: string;
+  
+  // Suits
+  hearts: string;
+  diamonds: string;
+  clubs: string;
+  spades: string;
+  joker: string;
+
+  // Enemy & Card Ranks
+  jack: string;
+  queen: string;
+  king: string;
+  ace: string;
+  
+  // Card Rank Display Letters on Card Faces
+  rankJackDisplay: string;
+  rankQueenDisplay: string;
+  rankKingDisplay: string;
+  rankAceDisplay: string;
+
+  // Log translations
+  logGameStarted: string;
+  logShieldIncreased: string;
+  logPlayerPlayed: string;
+  logEnemyDefeated: string;
+  logPerfectExecution: string;
+  logNewEnemyRevealed: string;
+  logEnemyAttack: string;
+  logDiscarded: string;
+  logPlayerPassed: string;
+  logSoloJokerUsed: string;
+  logJokerPlayed: string;
+  logTurnAssigned: string;
+  logVictory: string;
+  logGameOver: string;
+  logHeartHealed: string;
+  logDiamondRecruited: string;
+  logShieldBlocked: string;
+
+  // Error & Validation translations
+  errNoCardsSelected: string;
+  errJokerAlone: string;
+  errAceComboInvalid: string;
+  errComboSameRank: string;
+  errComboMaxSum: string;
+  errNotYourTurn: string;
+  errNotInPlayPhase: string;
+  errPlayerNotFound: string;
+  errNoActiveEnemy: string;
+  errNotWaitingJokerChoice: string;
+  errTargetPlayerNotFound: string;
+  errNotInDiscardPhase: string;
+  errCannotPassOutsidePlay: string;
+  errNotYourTurnPass: string;
+  errCannotPassConsecutive: string;
+  errSoloOnlyJoker: string;
+  errNoSoloJokersLeft: string;
+  errFirebaseUnavailable: string;
+  errRoomNotFound: string;
+  errGameAlreadyStarted: string;
+  errRoomFull: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -76,6 +145,9 @@ export const translations: Record<Language, Translations> = {
     joinRoom: 'Join Room',
     playerName: 'Player Name',
     playerPlaceholder: 'Enter your hero name...',
+    defaultSoloName: 'Solo Knight',
+    defaultHostName: 'Host Commander',
+    defaultJoinName: 'Challenger',
     roomCode: '4-Letter Room Code',
     roomCodePlaceholder: 'e.g. KNGS',
     tavernDeck: 'Tavern Deck',
@@ -101,7 +173,8 @@ export const translations: Record<Language, Translations> = {
     goldMedal: 'GOLD MEDAL (0 Jokers Used)',
     silverMedal: 'SILVER MEDAL (1 Joker Used)',
     bronzeMedal: 'BRONZE MEDAL (2 Jokers Used)',
-    cards: 'cards',
+    cardSingular: 'card',
+    cardPlural: 'cards',
     waitingForPlayer: 'Waiting for active player to finish turn...',
     leaveGame: 'Leave Game',
     noCardsPlayed: 'No cards played yet against this enemy.',
@@ -115,10 +188,70 @@ export const translations: Record<Language, Translations> = {
     immuneTo: 'Immune to',
     shieldActive: 'Shield Active: -{shield} Atk (Net Atk: {net})',
     healthPoints: 'Health Points',
+    hpUnit: 'HP',
     allEnemiesSlain: 'All Enemies Slain!',
     legalFooter: 'Kill The Face Cards is a 100% free, fan-made web adaptation based on the mechanics of the cooperative card game Regicide.',
     regicideDesignBy: 'Regicide original game design by Paul Abrahams, Luke Badger & Andy Richdale. Published by Badgers from Mars and Iello.',
     noOfficialArt: 'No official trademarks or artwork used. Standard 54-card deck mechanics. 0 ads, 0 tracking.',
+    court: 'Court',
+    connecting: 'Connecting...',
+    handLimitsInfo: 'Solo (8 limit) • 2 Players (7 limit) • 3 Players (6 limit) • 4 Players (5 limit)',
+
+    hearts: 'Hearts',
+    diamonds: 'Diamonds',
+    clubs: 'Clubs',
+    spades: 'Spades',
+    joker: 'Joker',
+
+    jack: 'Jack',
+    queen: 'Queen',
+    king: 'King',
+    ace: 'Ace',
+
+    rankJackDisplay: 'J',
+    rankQueenDisplay: 'Q',
+    rankKingDisplay: 'K',
+    rankAceDisplay: 'A',
+
+    logGameStarted: 'Game started with {count} player(s). First enemy: {rank} of {suit}',
+    logShieldIncreased: 'Spade shield increased by {amount} (Total shield: {total})',
+    logPlayerPlayed: '{name} played {cards} dealing {damage} damage.',
+    logEnemyDefeated: '{rank} of {suit} defeated and discarded.',
+    logPerfectExecution: 'PERFECT EXECUTION! {rank} of {suit} placed on top of Tavern deck.',
+    logNewEnemyRevealed: 'New enemy revealed: {rank} of {suit}.',
+    logEnemyAttack: 'Enemy attacks for {damage} damage! {name} must discard cards to endure.',
+    logDiscarded: '{name} discarded {cards} ({value} value). Total: {total}/{required}',
+    logPlayerPassed: '{name} passed their turn.',
+    logSoloJokerUsed: '{name} used a Solo Joker! Hand refilled to {count} cards.',
+    logJokerPlayed: '{name} played a Joker! {rank}\'s immunity cancelled.',
+    logTurnAssigned: 'Turn assigned to {name} following Joker play.',
+    logVictory: 'VICTORY! All 12 Kings and Court members have been slain!',
+    logGameOver: 'GAME OVER! {name} could not endure the enemy counter-attack.',
+    logHeartHealed: 'Heart power healed {count} card(s) back into the Tavern deck.',
+    logDiamondRecruited: 'Diamond power recruited {count} card(s) across players.',
+    logShieldBlocked: 'Enemy attack completely blocked by shield! Turn passes.',
+
+    errNoCardsSelected: 'No cards selected.',
+    errJokerAlone: 'Jokers must be played alone.',
+    errAceComboInvalid: 'Cannot pair Aces with multiple non-Ace cards.',
+    errComboSameRank: 'Combo cards must all have the exact same rank.',
+    errComboMaxSum: 'Combo total value ({sum}) exceeds maximum limit of 10.',
+    errNotYourTurn: 'Not your turn.',
+    errNotInPlayPhase: 'Not currently in card playing phase.',
+    errPlayerNotFound: 'Player not found.',
+    errNoActiveEnemy: 'No active enemy.',
+    errNotWaitingJokerChoice: 'Not waiting for Joker player selection.',
+    errTargetPlayerNotFound: 'Target player not found.',
+    errNotInDiscardPhase: 'Not currently enduring damage phase.',
+    errCannotPassOutsidePlay: 'Cannot pass outside play phase.',
+    errNotYourTurnPass: 'Not your turn to pass.',
+    errCannotPassConsecutive: 'Cannot pass if all other players passed consecutively.',
+    errSoloOnlyJoker: 'Solo Joker usage is only valid in Solo mode.',
+    errNoSoloJokersLeft: 'No Solo Jokers remaining.',
+    errFirebaseUnavailable: 'Firebase Database is not configured. Please set environment variables.',
+    errRoomNotFound: 'Room not found. Check code.',
+    errGameAlreadyStarted: 'Game has already started in this room.',
+    errRoomFull: 'Room is full (max 4 players).',
   },
   fr: {
     appTitle: 'KILL THE FACE CARDS',
@@ -134,6 +267,9 @@ export const translations: Record<Language, Translations> = {
     joinRoom: 'Rejoindre un Salon',
     playerName: 'Nom de Joueur',
     playerPlaceholder: 'Entrez votre nom de héros...',
+    defaultSoloName: 'Chevalier Solo',
+    defaultHostName: 'Commandant Hôte',
+    defaultJoinName: 'Challenger',
     roomCode: 'Code de Salon à 4 Lettres',
     roomCodePlaceholder: 'ex: KNGS',
     tavernDeck: 'Paquet Taverne',
@@ -143,7 +279,7 @@ export const translations: Record<Language, Translations> = {
     battleLog: 'Journal de Combat',
     yourTurn: 'À votre tour de jouer !',
     playerTurn: 'Tour de {name}',
-    attack: 'Attaquer ({count} cartes)',
+    attack: 'Attaquer ({count} carte(s))',
     passTurn: 'Passer son tour',
     useSoloJoker: 'Utiliser Joker Solo ({count} restant(s))',
     clear: 'Effacer',
@@ -159,7 +295,8 @@ export const translations: Record<Language, Translations> = {
     goldMedal: 'MÉDAILLE D’OR (0 Joker utilisé)',
     silverMedal: 'MÉDAILLE D’ARGENT (1 Joker utilisé)',
     bronzeMedal: 'MÉDAILLE DE BRONZE (2 Jokers utilisés)',
-    cards: 'cartes',
+    cardSingular: 'carte',
+    cardPlural: 'cartes',
     waitingForPlayer: 'En attente du tour du joueur actif...',
     leaveGame: 'Quitter la Partie',
     noCardsPlayed: 'Aucune carte jouée pour l’instant contre cet ennemi.',
@@ -173,9 +310,69 @@ export const translations: Record<Language, Translations> = {
     immuneTo: 'Immunisé aux',
     shieldActive: 'Bouclier Actif : -{shield} Atk (Atk Nette : {net})',
     healthPoints: 'Points de Vie',
+    hpUnit: 'PV',
     allEnemiesSlain: 'Tous les Ennemis Vaincus !',
     legalFooter: 'Kill The Face Cards est une adaptation web fan-made 100 % gratuite basée sur les mécaniques du jeu coopératif Régicide.',
     regicideDesignBy: 'Régicide conçu par Paul Abrahams, Luke Badger & Andy Richdale. Publié par Badgers from Mars et Iello.',
     noOfficialArt: 'Aucune illustration ou marque officielle utilisée. Jeu de 54 cartes traditionnel. 0 pub, 0 tracking.',
+    court: 'Cour',
+    connecting: 'Connexion...',
+    handLimitsInfo: 'Solo (8 max) • 2 Joueurs (7 max) • 3 Joueurs (6 max) • 4 Joueurs (5 max)',
+
+    hearts: 'Cœurs',
+    diamonds: 'Carreaux',
+    clubs: 'Trèfles',
+    spades: 'Piques',
+    joker: 'Joker',
+
+    jack: 'Valet',
+    queen: 'Dame',
+    king: 'Roi',
+    ace: 'As',
+
+    rankJackDisplay: 'V',
+    rankQueenDisplay: 'D',
+    rankKingDisplay: 'R',
+    rankAceDisplay: 'A',
+
+    logGameStarted: 'Partie démarrée avec {count} joueur(s). Premier ennemi : {rank} de {suit}',
+    logShieldIncreased: 'Bouclier Pique augmenté de {amount} (Bouclier total : {total})',
+    logPlayerPlayed: '{name} a joué {cards} infligeant {damage} dégâts.',
+    logEnemyDefeated: '{rank} de {suit} a été vaincu et défaussé.',
+    logPerfectExecution: 'EXÉCUTION PARFAITE ! {rank} de {suit} a été placé au-dessus du paquet Taverne.',
+    logNewEnemyRevealed: 'Nouvel ennemi révélé : {rank} de {suit}.',
+    logEnemyAttack: 'L’ennemi attaque pour {damage} dégâts ! {name} doit défausser des cartes.',
+    logDiscarded: '{name} a défaussé {cards} (valeur {value}). Total : {total}/{required}',
+    logPlayerPassed: '{name} a passé son tour.',
+    logSoloJokerUsed: '{name} a utilisé un Joker Solo ! Main complétée à {count} cartes.',
+    logJokerPlayed: '{name} a joué un Joker ! Immunité du {rank} annulée.',
+    logTurnAssigned: 'Tour attribué à {name} suite au jeu d’un Joker.',
+    logVictory: 'VICTOIRE ! Tous les 12 Rois et membres de la Cour ont été vaincus !',
+    logGameOver: 'DÉFAITE ! {name} n’a pas pu encaisser la riposte ennemie.',
+    logHeartHealed: 'Pouvoir Cœur : {count} carte(s) soignée(s) sous la Taverne.',
+    logDiamondRecruited: 'Pouvoir Carreau : {count} carte(s) recrutée(s) parmi les joueurs.',
+    logShieldBlocked: 'Attaque de l’ennemi complètement bloquée par le bouclier ! Le tour passe.',
+
+    errNoCardsSelected: 'Aucune carte sélectionnée.',
+    errJokerAlone: 'Le Joker doit être joué seul.',
+    errAceComboInvalid: 'Impossible d’associer des As à plusieurs cartes différentes.',
+    errComboSameRank: 'Les cartes d’un combo doivent toutes être du même rang.',
+    errComboMaxSum: 'La valeur totale du combo ({sum}) dépasse la limite maximale de 10.',
+    errNotYourTurn: 'Ce n’est pas votre tour.',
+    errNotInPlayPhase: 'Pas en phase de jeu de cartes.',
+    errPlayerNotFound: 'Joueur non trouvé.',
+    errNoActiveEnemy: 'Aucun ennemi actif.',
+    errNotWaitingJokerChoice: 'Pas en attente du choix de joueur du Joker.',
+    errTargetPlayerNotFound: 'Joueur cible non trouvé.',
+    errNotInDiscardPhase: 'Pas en phase de défausse de dégâts.',
+    errCannotPassOutsidePlay: 'Impossible de passer en dehors de la phase de jeu.',
+    errNotYourTurnPass: 'Ce n’est pas votre tour de passer.',
+    errCannotPassConsecutive: 'Impossible de passer si tous les autres joueurs ont déjà passé consécutivement.',
+    errSoloOnlyJoker: 'L’utilisation du Joker Solo est réservée au mode Solo.',
+    errNoSoloJokersLeft: 'Aucun Joker Solo restant.',
+    errFirebaseUnavailable: 'La base de données Firebase n’est pas configurée.',
+    errRoomNotFound: 'Salon non trouvé. Vérifiez le code.',
+    errGameAlreadyStarted: 'La partie a déjà commencé dans ce salon.',
+    errRoomFull: 'Le salon est complet (max 4 joueurs).',
   },
 };

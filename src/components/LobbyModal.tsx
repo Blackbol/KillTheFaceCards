@@ -26,12 +26,12 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (activeTab === 'SOLO') {
-      await onCreateGame(playerName || 'Solo Knight', 'SOLO');
+      await onCreateGame(playerName || t('defaultSoloName'), 'SOLO');
     } else if (activeTab === 'CREATE') {
-      await onCreateGame(playerName || 'Host Commander', 'MULTIPLAYER');
+      await onCreateGame(playerName || t('defaultHostName'), 'MULTIPLAYER');
     } else if (activeTab === 'JOIN') {
       if (roomCode.trim().length === 4) {
-        await onJoinGame(roomCode, playerName || 'Challenger');
+        await onJoinGame(roomCode, playerName || t('defaultJoinName'));
       }
     }
   };
@@ -133,7 +133,7 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
             <Play size={20} className="fill-slate-950" />
             <span>
               {isLoading
-                ? 'Connecting...'
+                ? t('connecting')
                 : activeTab === 'SOLO'
                 ? t('startSolo')
                 : activeTab === 'CREATE'
@@ -144,7 +144,7 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
         </form>
 
         <div className="text-[11px] text-slate-500 text-center space-y-1 border-t border-slate-900 pt-4">
-          <p>Solo (8 limit) • 2P (7 limit) • 3P (6 limit) • 4P (5 limit)</p>
+          <p>{t('handLimitsInfo')}</p>
         </div>
       </div>
     </div>

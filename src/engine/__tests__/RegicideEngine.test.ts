@@ -90,7 +90,7 @@ describe('RegicideEngine Unit Test Suite', () => {
       ];
       const result = RegicideEngine.validatePlayedCards(pairOfSixes);
       expect(result.valid).toBe(false);
-      expect(result.reason).toContain('exceeds maximum limit of 10');
+      expect(result.reason).toBe('errComboMaxSum');
     });
 
     it('rejects playing Jokers with other cards', () => {
@@ -100,7 +100,7 @@ describe('RegicideEngine Unit Test Suite', () => {
       ];
       const result = RegicideEngine.validatePlayedCards(jokerPlusCard);
       expect(result.valid).toBe(false);
-      expect(result.reason).toContain('alone');
+      expect(result.reason).toBe('errJokerAlone');
     });
   });
 
@@ -332,7 +332,7 @@ describe('RegicideEngine Unit Test Suite', () => {
       // Player 2 tries to pass, but Player 1 already passed consecutively!
       const res2 = RegicideEngine.passTurn(res1.nextState, 'p2');
       expect(res2.success).toBe(false);
-      expect(res2.message).toContain('Cannot pass if all other players passed consecutively');
+      expect(res2.message).toBe('errCannotPassConsecutive');
     });
   });
 });

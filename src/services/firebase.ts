@@ -1,6 +1,6 @@
 // 📁 src/services/firebase.ts
 
-import { initializeApp } from 'firebase/app';
+import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import {
   getDatabase,
   ref,
@@ -14,7 +14,7 @@ import {
 import { GameMode, GameState } from '../types/game';
 import { RegicideEngine } from '../engine/RegicideEngine';
 
-// Firebase configuration derived from environment variables (.env)
+// Firebase configuration loaded strictly from environment variables (.env)
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "",
   authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "",
@@ -25,9 +25,35 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || ""
 };
 
-// Initialize Firebase App & Realtime Database instance
-const app = initializeApp(firebaseConfig);
-export const database: Database = getDatabase(app);
+let appInstance: FirebaseApp | null = null;
+let dbInstance: Database | null = null;
+
+/**
+ * Safely retrieves or initializes the Firebase Realtime Database instance.
+ * Returns null if environment variables are not configured (Offline / Solo mode).
+ */
+export function getDatabaseInstance(): Database | null {
+  if (dbInstance) return dbInstance;
+
+  // Check if databaseURL is configured before attempting initialization
+  if (!firebaseConfig.databaseURL || !firebaseConfig.apiKey) {
+    console.info('[Firebase] No remote credentials found in environment. Running in offline mode.');
+    return null;
+  }
+
+  try {
+    if (!getApps().length) {
+      appInstance = initializeApp(firebaseConfig);
+    } else {
+      appInstance = getApps()[0];
+    }
+    dbInstance = getDatabase(appInstance);
+    return dbInstance;
+  } catch (error) {
+    console.warn('[Firebase] Initialization error:', error);
+    return null;
+  }
+}
 
 /**
  * Generates a random 4-letter uppercase room code (e.g. "KNGS", "RGC1").
@@ -48,14 +74,21 @@ export async function createRoom(
   hostName: string,
   mode: GameMode = 'MULTIPLAYER'
 ): Promise<{ roomId: string; playerId: string; initialState: GameState }> {
+  const db = getDatabaseInstance();
   const roomId = generateRoomCode();
   const hostId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
   const playerConfigs = [{ id: hostId, name: hostName, isHost: true }];
   const initialState = RegicideEngine.createNewGame(mode, playerConfigs, roomId);
 
-  const roomRef = ref(database, `rooms/${roomId}`);
-  await set(roomRef, initialState);
+  if (db) {
+    try {
+      const roomRef = ref(db, `rooms/${roomId}`);
+      await set(roomRef, initialState);
+    } catch (err) {
+      console.warn('[Firebase] Could not push room to remote database:', err);
+    }
+  }
 
   return { roomId, playerId: hostId, initialState };
 }
@@ -67,8 +100,13 @@ export async function joinRoom(
   roomId: string,
   playerName: string
 ): Promise<{ success: boolean; playerId?: string; error?: string }> {
+  const db = getDatabaseInstance();
+  if (!db) {
+    return { success: false, error: 'Firebase is not configured. Please set VITE_FIREBASE_DATABASE_URL in .env.' };
+  }
+
   const cleanRoomId = roomId.trim().toUpperCase();
-  const roomRef = ref(database, `rooms/${cleanRoomId}`);
+  const roomRef = ref(db, `rooms/${cleanRoomId}`);
   const snapshot = await get(roomRef);
 
   if (!snapshot.exists()) {
@@ -91,7 +129,6 @@ export async function joinRoom(
     { id: playerId, name: playerName, isHost: false, isConnected: true, hand: [] }
   ];
 
-  // Re-initialize game state with updated player list to calculate correct hand distributions
   const updatedState = RegicideEngine.createNewGame(state.mode, updatedPlayers, cleanRoomId);
   await set(roomRef, updatedState);
 
@@ -105,7 +142,10 @@ export function subscribeToRoom(
   roomId: string,
   callback: (state: GameState | null) => void
 ): () => void {
-  const roomRef = ref(database, `rooms/${roomId.toUpperCase()}`);
+  const db = getDatabaseInstance();
+  if (!db) return () => {};
+
+  const roomRef = ref(db, `rooms/${roomId.toUpperCase()}`);
 
   const unsubscribe = onValue(roomRef, (snapshot) => {
     if (snapshot.exists()) {
@@ -124,7 +164,10 @@ export function subscribeToRoom(
  * Updates game state in Firebase RTDB.
  */
 export async function pushGameState(roomId: string, newState: GameState): Promise<void> {
-  const roomRef = ref(database, `rooms/${roomId.toUpperCase()}`);
+  const db = getDatabaseInstance();
+  if (!db) return;
+
+  const roomRef = ref(db, `rooms/${roomId.toUpperCase()}`);
   await set(roomRef, newState);
 }
 
@@ -132,12 +175,15 @@ export async function pushGameState(roomId: string, newState: GameState): Promis
  * Clean up room if game is over or inactive > 3 hours.
  */
 export async function cleanupRoomIfStale(roomId: string, state: GameState): Promise<void> {
+  const db = getDatabaseInstance();
+  if (!db) return;
+
   const THREE_HOURS_MS = 3 * 60 * 60 * 1000;
   const isStale = Date.now() - (state.updatedAt || state.createdAt) > THREE_HOURS_MS;
   const isFinished = state.status === 'VICTORY' || state.status === 'GAME_OVER';
 
   if (isStale || isFinished) {
-    const roomRef = ref(database, `rooms/${roomId.toUpperCase()}`);
+    const roomRef = ref(db, `rooms/${roomId.toUpperCase()}`);
     await remove(roomRef);
   }
 }

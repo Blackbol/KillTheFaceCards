@@ -34,6 +34,13 @@ export class RegicideEngine {
   }
 
   /**
+   * Helper to format structured log entry JSON.
+   */
+  private static log(key: string, params?: Record<string, string | number>): string {
+    return JSON.stringify({ key, params });
+  }
+
+  /**
    * Creates a new game state with shuffled decks and initial hand distribution.
    */
   public static createNewGame(
@@ -44,14 +51,11 @@ export class RegicideEngine {
     const playerCount = Math.max(1, Math.min(4, playerConfigs.length));
     const handLimit = this.getHandSizeLimit(playerCount);
 
-    // 1. Build Castle Deck (4 Jacks, 4 Queens, 4 Kings)
     const castleDeck = this.buildCastleDeck();
     const firstEnemy = castleDeck.shift() || null;
 
-    // 2. Build Tavern Deck (Cards 1-10 + Jokers according to player count)
     const { tavernDeck, soloJokers } = this.buildTavernDeck(playerCount, mode);
 
-    // 3. Create Players & Deal Initial Hands
     const players: Player[] = playerConfigs.map((config) => ({
       id: config.id,
       name: config.name,
@@ -60,7 +64,6 @@ export class RegicideEngine {
       isConnected: true,
     }));
 
-    // Deal cards clockwise to fill each player's hand up to limit
     for (let i = 0; i < handLimit; i++) {
       for (const player of players) {
         if (tavernDeck.length > 0) {
@@ -85,7 +88,9 @@ export class RegicideEngine {
       pendingDamage: 0,
       discardedDamageSum: 0,
       consecutivePassCount: 0,
-      lastActionLog: [`Game started with ${playerCount} player(s). First enemy: ${firstEnemy?.rank} of ${firstEnemy?.suit}`],
+      lastActionLog: [
+        this.log('logGameStarted', { count: playerCount, rank: firstEnemy?.rank || '', suit: firstEnemy?.suit || '' })
+      ],
       soloJokers: soloJokers || { availableCount: 0, usedCount: 0 },
       createdAt: Date.now(),
       updatedAt: Date.now(),
@@ -97,43 +102,39 @@ export class RegicideEngine {
    */
   public static validatePlayedCards(cards: Card[]): { valid: boolean; reason?: string } {
     if (cards.length === 0) {
-      return { valid: false, reason: 'No cards selected.' };
+      return { valid: false, reason: 'errNoCardsSelected' };
     }
 
-    // Single card play
     if (cards.length === 1) {
       return { valid: true };
     }
 
-    // Check if any card is a Joker
     const hasJoker = cards.some((c) => c.isJoker);
     if (hasJoker) {
-      return { valid: false, reason: 'Jokers must be played alone.' };
+      return { valid: false, reason: 'errJokerAlone' };
     }
 
-    // Check for Ace combination (1 base card + 1 or more Aces, or Ace + Ace)
     const aces = cards.filter((c) => c.rank === 'A');
     const nonAces = cards.filter((c) => c.rank !== 'A');
 
     if (aces.length > 0) {
       if (nonAces.length <= 1) {
-        return { valid: true }; // Single card + Ace(s), or multiple Aces paired together
+        return { valid: true };
       } else {
-        return { valid: false, reason: 'Cannot pair Aces with multiple non-Ace cards.' };
+        return { valid: false, reason: 'errAceComboInvalid' };
       }
     }
 
-    // Check for standard Combos (Pairs, Triples, Quadruples of same numerical rank with total sum <= 10)
     const firstRank = cards[0].rank;
     const sameRank = cards.every((c) => c.rank === firstRank);
 
     if (!sameRank) {
-      return { valid: false, reason: 'Combo cards must all have the exact same rank.' };
+      return { valid: false, reason: 'errComboSameRank' };
     }
 
     const totalSum = cards.reduce((sum, c) => sum + c.value, 0);
     if (totalSum > 10) {
-      return { valid: false, reason: `Combo total value (${totalSum}) exceeds maximum limit of 10.` };
+      return { valid: false, reason: 'errComboMaxSum' };
     }
 
     return { valid: true };
@@ -144,16 +145,16 @@ export class RegicideEngine {
    */
   public static playTurn(state: GameState, playerId: string, playedCards: Card[]): ActionResult {
     if (state.status !== 'PLAY_CARD') {
-      return { success: false, message: 'Not currently in card playing phase.', nextState: state };
+      return { success: false, message: 'errNotInPlayPhase', nextState: state };
     }
 
     if (state.currentTurnPlayerId !== playerId) {
-      return { success: false, message: 'Not your turn.', nextState: state };
+      return { success: false, message: 'errNotYourTurn', nextState: state };
     }
 
     const validation = this.validatePlayedCards(playedCards);
     if (!validation.valid) {
-      return { success: false, message: validation.reason || 'Invalid card combination.', nextState: state };
+      return { success: false, message: validation.reason || 'errNoCardsSelected', nextState: state };
     }
 
     const nextState: GameState = JSON.parse(JSON.stringify(state));
@@ -162,10 +163,8 @@ export class RegicideEngine {
       return { success: false, message: 'Player not found.', nextState: state };
     }
 
-    // Playing a card resets consecutive pass count
     nextState.consecutivePassCount = 0;
 
-    // Remove played cards from player's hand
     const cardIdsToPlay = new Set(playedCards.map((c) => c.id));
     player.hand = player.hand.filter((c) => !cardIdsToPlay.has(c.id));
     nextState.playedCards.push(...playedCards);
@@ -175,15 +174,11 @@ export class RegicideEngine {
       return { success: false, message: 'No active enemy.', nextState: state };
     }
 
-    // Check for Joker play
     if (playedCards.length === 1 && playedCards[0].isJoker) {
       return this.handleJokerPlay(nextState, player, enemy);
     }
 
-    // Calculate base attack value & powers
     const baseAttackValue = playedCards.reduce((sum, c) => sum + c.value, 0);
-    
-    // Determine active powers (respecting enemy suit immunity unless cancelled)
     const isImmune = (suit: Suit | null) => suit !== null && enemy.suit === suit && !enemy.isImmunityCancelled;
 
     const hasHearts = playedCards.some((c) => c.suit === 'HEARTS') && !isImmune('HEARTS');
@@ -191,7 +186,6 @@ export class RegicideEngine {
     const hasClubs = playedCards.some((c) => c.suit === 'CLUBS') && !isImmune('CLUBS');
     const hasSpades = playedCards.some((c) => c.suit === 'SPADES') && !isImmune('SPADES');
 
-    // Rule: Resolve Hearts (Heal) BEFORE Diamonds (Draw)
     if (hasHearts) {
       this.resolveHeartPower(nextState, baseAttackValue);
     }
@@ -202,31 +196,29 @@ export class RegicideEngine {
 
     if (hasSpades) {
       enemy.currentShield += baseAttackValue;
-      nextState.lastActionLog.push(`Spade shield increased by ${baseAttackValue} (Total shield: ${enemy.currentShield}).`);
+      nextState.lastActionLog.push(this.log('logShieldIncreased', { amount: baseAttackValue, total: enemy.currentShield }));
     }
 
-    // Calculate Step 3 Damage to Enemy
     const damageMultiplier = hasClubs ? 2 : 1;
     const finalDamage = baseAttackValue * damageMultiplier;
 
     enemy.currentHp -= finalDamage;
-    nextState.lastActionLog.push(`${player.name} played ${playedCards.map((c) => `${c.rank} of ${c.suit || 'Joker'}`).join(', ')} dealing ${finalDamage} damage.`);
+    const cardDescriptions = playedCards.map((c) => `${c.rank}`).join(', ');
+    nextState.lastActionLog.push(this.log('logPlayerPlayed', { name: player.name, cards: cardDescriptions, damage: finalDamage }));
 
-    // Check if Enemy is defeated
     if (enemy.currentHp <= 0) {
       return this.handleEnemyDefeated(nextState, player.id);
     }
 
-    // Step 4: Enemy Counter-Attack
     const effectiveEnemyAttack = Math.max(0, enemy.attack - enemy.currentShield);
     if (effectiveEnemyAttack === 0) {
-      nextState.lastActionLog.push(`Enemy attack completely blocked by shield! Turn passes.`);
+      nextState.lastActionLog.push(this.log('logShieldBlocked'));
       this.advanceToNextTurn(nextState);
     } else {
       nextState.status = 'DISCARD_DAMAGE';
       nextState.pendingDamage = effectiveEnemyAttack;
       nextState.discardedDamageSum = 0;
-      nextState.lastActionLog.push(`Enemy attacks for ${effectiveEnemyAttack} damage! ${player.name} must discard cards to endure.`);
+      nextState.lastActionLog.push(this.log('logEnemyAttack', { damage: effectiveEnemyAttack, name: player.name }));
     }
 
     nextState.updatedAt = Date.now();
@@ -234,19 +226,18 @@ export class RegicideEngine {
   }
 
   /**
-   * Resolves Joker play mechanics: cancels enemy immunity and retroactively calculates any Spade shields played earlier.
+   * Resolves Joker play mechanics.
    */
   private static handleJokerPlay(state: GameState, player: Player, enemy: Enemy): ActionResult {
     enemy.isImmunityCancelled = true;
-    state.lastActionLog.push(`${player.name} played a Joker! ${enemy.rank}'s immunity cancelled.`);
+    state.lastActionLog.push(this.log('logJokerPlayed', { name: player.name, rank: enemy.rank }));
 
-    // Retroactive rule for Spades against Spade enemies (Rulebook Page 9)
     if (enemy.suit === 'SPADES') {
       const previouslyPlayedSpades = state.playedCards.filter((c) => c.suit === 'SPADES' && !c.isJoker);
       const retroactiveShieldSum = previouslyPlayedSpades.reduce((sum, c) => sum + c.value, 0);
       if (retroactiveShieldSum > 0) {
         enemy.currentShield += retroactiveShieldSum;
-        state.lastActionLog.push(`Retroactive Spade shield of +${retroactiveShieldSum} applied following Joker play.`);
+        state.lastActionLog.push(this.log('logShieldIncreased', { amount: retroactiveShieldSum, total: enemy.currentShield }));
       }
     }
 
@@ -256,7 +247,6 @@ export class RegicideEngine {
       return { success: true, message: 'Joker played in solo mode.', nextState: state };
     }
 
-    // Multiplayer mode: Player picks who takes the next turn
     state.status = 'YIELD_JOKER_CHOICE';
     state.updatedAt = Date.now();
     return { success: true, message: 'Select next player to take turn.', nextState: state };
@@ -278,14 +268,14 @@ export class RegicideEngine {
     const nextState: GameState = JSON.parse(JSON.stringify(state));
     nextState.currentTurnPlayerId = targetPlayerId;
     nextState.status = 'PLAY_CARD';
-    nextState.lastActionLog.push(`Turn assigned to ${target.name} following Joker play.`);
+    nextState.lastActionLog.push(this.log('logTurnAssigned', { name: target.name }));
     nextState.updatedAt = Date.now();
 
     return { success: true, message: `Turn granted to ${target.name}.`, nextState };
   }
 
   /**
-   * Resolves Heart suit power (Heal): Shuffles discard pile and puts cards on bottom of Tavern deck.
+   * Resolves Heart suit power (Heal).
    */
   private static resolveHeartPower(state: GameState, amount: number): void {
     if (state.discardPile.length === 0 || amount <= 0) return;
@@ -299,11 +289,11 @@ export class RegicideEngine {
     state.tavernDeck.unshift(...healedCards);
     state.discardPile = remainingDiscard;
 
-    state.lastActionLog.push(`Heart power healed ${healCount} card(s) back into the Tavern deck.`);
+    state.lastActionLog.push(this.log('logHeartHealed', { count: healCount }));
   }
 
   /**
-   * Resolves Diamond suit power (Recruit): Clockwise drawing from Tavern deck up to hand limits.
+   * Resolves Diamond suit power (Recruit).
    */
   private static resolveDiamondPower(state: GameState, activePlayerId: string, amount: number): void {
     if (state.tavernDeck.length === 0 || amount <= 0) return;
@@ -333,22 +323,20 @@ export class RegicideEngine {
       currIdx = (currIdx + 1) % state.players.length;
     }
 
-    state.lastActionLog.push(`Diamond power recruited ${cardsDrawn} card(s) across players.`);
+    state.lastActionLog.push(this.log('logDiamondRecruited', { count: cardsDrawn }));
   }
 
   /**
-   * Handles enemy defeat resolution (Perfect Execution vs Overkill).
+   * Handles enemy defeat resolution.
    */
   private static handleEnemyDefeated(state: GameState, killingPlayerId: string): ActionResult {
     const enemy = state.currentEnemy!;
     const isPerfectExecution = enemy.currentHp === 0;
 
-    // Move played cards against this enemy to discard pile
     state.discardPile.push(...state.playedCards);
     state.playedCards = [];
 
     if (isPerfectExecution) {
-      // Perfect Execution: Defeated enemy goes FACE DOWN on TOP of Tavern deck!
       const enemyAsCard: Card = {
         id: enemy.id,
         suit: enemy.suit,
@@ -357,9 +345,8 @@ export class RegicideEngine {
         isJoker: false,
       };
       state.tavernDeck.push(enemyAsCard);
-      state.lastActionLog.push(`PERFECT EXECUTION! ${enemy.rank} of ${enemy.suit} placed on top of Tavern deck.`);
+      state.lastActionLog.push(this.log('logPerfectExecution', { rank: enemy.rank, suit: enemy.suit }));
     } else {
-      // Overkill: Defeated enemy goes to Discard pile
       const enemyAsCard: Card = {
         id: enemy.id,
         suit: enemy.suit,
@@ -368,24 +355,22 @@ export class RegicideEngine {
         isJoker: false,
       };
       state.discardPile.push(enemyAsCard);
-      state.lastActionLog.push(`${enemy.rank} of ${enemy.suit} defeated and discarded.`);
+      state.lastActionLog.push(this.log('logEnemyDefeated', { rank: enemy.rank, suit: enemy.suit }));
     }
 
-    // Reveal next enemy from Castle deck
     if (state.castleDeck.length > 0) {
       state.currentEnemy = state.castleDeck.shift()!;
       state.status = 'PLAY_CARD';
-      state.currentTurnPlayerId = killingPlayerId; // Killing player immediately plays again!
+      state.currentTurnPlayerId = killingPlayerId;
       state.consecutivePassCount = 0;
-      state.lastActionLog.push(`New enemy revealed: ${state.currentEnemy.rank} of ${state.currentEnemy.suit}.`);
+      state.lastActionLog.push(this.log('logNewEnemyRevealed', { rank: state.currentEnemy.rank, suit: state.currentEnemy.suit }));
       state.updatedAt = Date.now();
       return { success: true, message: 'Enemy defeated! Next enemy revealed.', nextState: state };
     }
 
-    // Victory condition: Castle deck is empty and current enemy defeated!
     state.currentEnemy = null;
     state.status = 'VICTORY';
-    state.lastActionLog.push('VICTORY! All 12 Kings and Court members have been slain!');
+    state.lastActionLog.push(this.log('logVictory'));
     state.updatedAt = Date.now();
 
     return { success: true, message: 'Victory achieved!', nextState: state };
@@ -422,7 +407,8 @@ export class RegicideEngine {
     nextState.discardPile.push(...cardsToDiscard);
     nextState.discardedDamageSum += discardValueSum;
 
-    nextState.lastActionLog.push(`${player.name} discarded ${cardsToDiscard.map((c) => c.rank).join(', ')} (${discardValueSum} value). Total: ${nextState.discardedDamageSum}/${nextState.pendingDamage}`);
+    const cardsDesc = cardsToDiscard.map((c) => c.rank).join(', ');
+    nextState.lastActionLog.push(this.log('logDiscarded', { name: player.name, cards: cardsDesc, value: discardValueSum, total: nextState.discardedDamageSum, required: nextState.pendingDamage }));
 
     if (nextState.discardedDamageSum >= nextState.pendingDamage) {
       nextState.pendingDamage = 0;
@@ -434,7 +420,7 @@ export class RegicideEngine {
 
     if (player.hand.length === 0 && nextState.discardedDamageSum < nextState.pendingDamage) {
       nextState.status = 'GAME_OVER';
-      nextState.lastActionLog.push(`GAME OVER! ${player.name} could not endure the enemy counter-attack.`);
+      nextState.lastActionLog.push(this.log('logGameOver', { name: player.name }));
       nextState.updatedAt = Date.now();
       return { success: true, message: 'Game over! Unable to absorb damage.', nextState };
     }
@@ -444,21 +430,19 @@ export class RegicideEngine {
   }
 
   /**
-   * Handles player passing their turn (skips steps 2 & 3, enters step 4).
-   * Enforces Rulebook constraint: "Un joueur ne peut pas passer si tous les autres joueurs viennent de passer avant lui."
+   * Handles player passing their turn.
    */
   public static passTurn(state: GameState, playerId: string): ActionResult {
     if (state.status !== 'PLAY_CARD') {
-      return { success: false, message: 'Cannot pass outside play phase.', nextState: state };
+      return { success: false, message: 'errCannotPassOutsidePlay', nextState: state };
     }
 
     if (state.currentTurnPlayerId !== playerId) {
-      return { success: false, message: 'Not your turn to pass.', nextState: state };
+      return { success: false, message: 'errNotYourTurnPass', nextState: state };
     }
 
-    // Rule check: All other players passed consecutively right before this turn
     if (state.players.length > 1 && state.consecutivePassCount >= state.players.length - 1) {
-      return { success: false, message: 'Cannot pass if all other players passed consecutively.', nextState: state };
+      return { success: false, message: 'errCannotPassConsecutive', nextState: state };
     }
 
     const nextState: GameState = JSON.parse(JSON.stringify(state));
@@ -469,12 +453,12 @@ export class RegicideEngine {
 
     const player = nextState.players.find((p) => p.id === playerId);
     nextState.consecutivePassCount++;
-    nextState.lastActionLog.push(`${player?.name || 'Player'} passed their turn.`);
+    nextState.lastActionLog.push(this.log('logPlayerPassed', { name: player?.name || 'Player' }));
 
     const effectiveEnemyAttack = Math.max(0, enemy.attack - enemy.currentShield);
 
     if (effectiveEnemyAttack === 0) {
-      nextState.lastActionLog.push('Enemy attack blocked by shield. Turn passes.');
+      nextState.lastActionLog.push(this.log('logShieldBlocked'));
       this.advanceToNextTurn(nextState);
     } else {
       nextState.status = 'DISCARD_DAMAGE';
@@ -487,7 +471,7 @@ export class RegicideEngine {
   }
 
   /**
-   * Special Solo Mode Joker ability: Discards hand and draws 8 fresh cards.
+   * Special Solo Mode Joker ability.
    */
   public static useSoloJoker(state: GameState, playerId: string): ActionResult {
     if (state.mode !== 'SOLO') {
@@ -514,14 +498,14 @@ export class RegicideEngine {
 
     nextState.soloJokers.availableCount--;
     nextState.soloJokers.usedCount++;
-    nextState.lastActionLog.push(`${player.name} used a Solo Joker! Hand refilled to ${player.hand.length} cards.`);
+    nextState.lastActionLog.push(this.log('logSoloJokerUsed', { name: player.name, count: player.hand.length }));
     nextState.updatedAt = Date.now();
 
     return { success: true, message: 'Solo Joker activated.', nextState };
   }
 
   /**
-   * Advances the turn to the next connected player in clockwise sequence.
+   * Advances turn clockwise.
    */
   private static advanceToNextTurn(state: GameState): void {
     const currIdx = state.players.findIndex((p) => p.id === state.currentTurnPlayerId);
@@ -532,9 +516,6 @@ export class RegicideEngine {
     state.status = 'PLAY_CARD';
   }
 
-  /**
-   * Constructs the 12-card Castle Deck (4 Jacks, 4 Queens, 4 Kings).
-   */
   private static buildCastleDeck(): Enemy[] {
     const suits: Suit[] = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
 
@@ -580,9 +561,6 @@ export class RegicideEngine {
     return [...jacks, ...queens, ...kings];
   }
 
-  /**
-   * Constructs the Tavern Deck (40 suit cards + Jokers based on player count).
-   */
   private static buildTavernDeck(playerCount: number, mode: GameMode): { tavernDeck: Card[]; soloJokers?: { availableCount: number; usedCount: number } } {
     const suits: Suit[] = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
     const cards: Card[] = [];
@@ -627,9 +605,6 @@ export class RegicideEngine {
     };
   }
 
-  /**
-   * Utility helper to perform Fisher-Yates array shuffling.
-   */
   private static shuffleArray<T>(array: T[]): T[] {
     const copy = [...array];
     for (let i = copy.length - 1; i > 0; i--) {

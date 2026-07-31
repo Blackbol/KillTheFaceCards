@@ -69,7 +69,7 @@ export function App() {
         {errorMessage && showGameScreen && (
           <div className="w-full max-w-xl mb-4 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg animate-fadeIn">
             <AlertCircle size={18} className="shrink-0" />
-            <span>{errorMessage}</span>
+            <span>{t(errorMessage as any) || errorMessage}</span>
           </div>
         )}
 
