@@ -22,6 +22,10 @@ Fight together through the **Castle Deck** to defeat all **12 members of the Roy
   - **2 Solo Jokers** available to cancel active enemy suit immunity or instantly refill hand back up to 8 cards.
   - End-game medal grading system (**Gold, Silver, and Bronze Medals** based on Jokers used).
 
+- **💾 Game State Save & Resume** :
+  - Prompted to save active solo games when leaving a match.
+  - Automatically detects saved games for the current username in the Lobby with a **"Resume Saved Solo Game"** banner to pick up right where you left off.
+
 - **📱 Dual Responsive Interfaces (Pixel 7 & 1080p Desktop)** :
   - **24" 1080p Desktop View** : 3-column grid layout with zero vertical page scrolling (`h-screen overflow-hidden`).
   - **Smartphone View (Google Pixel 7)** : Pinned bottom action bar under the thumb (`sticky bottom-0`) and horizontal scrollable player hand with zero page scrolling (`100dvh`).
@@ -29,10 +33,6 @@ Fight together through the **Castle Deck** to defeat all **12 members of the Roy
 - **🌍 Bilingual English / French (i18n)** :
   - Seamless real-time language toggling (EN / FR).
   - Language preference persisted in local storage.
-
-- **💾 User Preferences (Cookies / LocalStorage)** :
-  - Player username automatically remembered for future games.
-  - Expand/collapse states for *Played Cards* and *Battle Log* panels saved automatically.
 
 - **📜 Integrated Rulebook & Quick Reference** :
   - Complete official rules modal accessible anytime from the header button.

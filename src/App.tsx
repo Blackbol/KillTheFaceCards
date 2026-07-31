@@ -7,15 +7,18 @@ import { HandView } from './components/HandView';
 import { ActionControls } from './components/ActionControls';
 import { LobbyModal } from './components/LobbyModal';
 import { VictoryGameOverModal } from './components/VictoryGameOverModal';
+import { SaveGameModal } from './components/SaveGameModal';
 import { RulesModal } from './components/RulesModal';
 import { Footer } from './components/Footer';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/I18nContext';
+import { saveSoloGame, clearSavedSoloGame } from './utils/saveGame';
 import { Crown, LogOut, AlertCircle, BookOpen } from 'lucide-react';
 
 export function App() {
   const { t } = useI18n();
   const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState<boolean>(false);
 
   const {
     gameState,
@@ -25,6 +28,7 @@ export function App() {
     isLoading,
     createGame,
     joinGame,
+    resumeSavedGame,
     toggleCardSelection,
     clearSelection,
     playSelectedCards,
@@ -35,7 +39,33 @@ export function App() {
     resetToLobby,
   } = useGameRoom();
 
-  const handleLeaveGame = () => {
+  const handleLeaveGameClick = () => {
+    if (
+      gameState &&
+      gameState.mode === 'SOLO' &&
+      gameState.status !== 'LOBBY' &&
+      gameState.status !== 'VICTORY' &&
+      gameState.status !== 'GAME_OVER'
+    ) {
+      setIsSaveModalOpen(true);
+    } else {
+      resetToLobby();
+    }
+  };
+
+  const handleSaveAndQuit = () => {
+    if (gameState) {
+      saveSoloGame(gameState);
+    }
+    setIsSaveModalOpen(false);
+    resetToLobby();
+  };
+
+  const handleQuitWithoutSave = () => {
+    if (gameState && gameState.players[0]) {
+      clearSavedSoloGame(gameState.players[0].name);
+    }
+    setIsSaveModalOpen(false);
     resetToLobby();
   };
 
@@ -47,7 +77,7 @@ export function App() {
       {/* Top Navbar */}
       <header className="w-full border-b border-slate-900 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 px-3 py-1.5 sm:px-4 sm:py-2 shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={handleLeaveGame}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleLeaveGameClick}>
             <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Crown size={18} />
             </div>
@@ -72,7 +102,7 @@ export function App() {
             {showGameScreen && (
               <button
                 type="button"
-                onClick={handleLeaveGame}
+                onClick={handleLeaveGameClick}
                 className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl transition-colors font-medium"
               >
                 <LogOut size={13} />
@@ -83,7 +113,7 @@ export function App() {
         </div>
       </header>
 
-      {/* Main Content Area: Zero Scroll Viewport */}
+      {/* Main Content Area */}
       <main className="flex-1 flex flex-col items-center justify-between p-1.5 sm:p-3 overflow-hidden min-h-0 pb-16 md:pb-1">
         {errorMessage && showGameScreen && (
           <div className="w-full max-w-xl mb-1 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-2 shadow-lg animate-fadeIn shrink-0 z-20">
@@ -97,6 +127,7 @@ export function App() {
             <LobbyModal
               onCreateGame={createGame}
               onJoinGame={joinGame}
+              onResumeGame={resumeSavedGame}
               isLoading={isLoading}
               errorMessage={errorMessage}
             />
@@ -133,8 +164,16 @@ export function App() {
 
       {/* End Game Modal */}
       {gameState && (
-        <VictoryGameOverModal gameState={gameState} onReset={handleLeaveGame} />
+        <VictoryGameOverModal gameState={gameState} onReset={resetToLobby} />
       )}
+
+      {/* Save Game Confirmation Modal */}
+      <SaveGameModal
+        isOpen={isSaveModalOpen}
+        onSaveAndQuit={handleSaveAndQuit}
+        onQuitWithoutSave={handleQuitWithoutSave}
+        onCancel={() => setIsSaveModalOpen(false)}
+      />
 
       {/* Rules Reference Drawer / Modal */}
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />

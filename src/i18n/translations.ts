@@ -70,6 +70,15 @@ export interface Translations {
   handLimitsInfo: string;
   rulesQuickRef: string;
   
+  // Save & Resume Game translations
+  saveGameTitle: string;
+  saveGameDesc: string;
+  saveAndQuit: string;
+  quitWithoutSave: string;
+  cancel: string;
+  resumeSavedGame: string;
+  savedGameDetails: string;
+
   // Suits
   hearts: string;
   diamonds: string;
@@ -228,6 +237,14 @@ export const translations: Record<Language, Translations> = {
     handLimitsInfo: 'Solo (8 limit) • 2 Players (7 limit) • 3 Players (6 limit) • 4 Players (5 limit)',
     rulesQuickRef: 'Rules',
 
+    saveGameTitle: 'Save Active Game?',
+    saveGameDesc: 'Would you like to save your solo game in progress to resume later with this username?',
+    saveAndQuit: 'Save & Quit',
+    quitWithoutSave: 'Quit without saving',
+    cancel: 'Cancel',
+    resumeSavedGame: 'Resume Saved Solo Game',
+    savedGameDetails: 'Enemy: {rank} of {suit} • {cards} cards in hand',
+
     hearts: 'Hearts',
     diamonds: 'Diamonds',
     clubs: 'Clubs',
@@ -378,6 +395,14 @@ export const translations: Record<Language, Translations> = {
     handLimitsInfo: 'Solo (8 max) • 2 Joueurs (7 max) • 3 Joueurs (6 max) • 4 Joueurs (5 max)',
     rulesQuickRef: 'Règles',
 
+    saveGameTitle: 'Sauvegarder la Partie ?',
+    saveGameDesc: 'Voulez-vous enregistrer votre partie solo en cours pour la reprendre plus tard avec ce même pseudo ?',
+    saveAndQuit: 'Sauvegarder & Quitter',
+    quitWithoutSave: 'Quitter sans sauvegarder',
+    cancel: 'Annuler',
+    resumeSavedGame: 'Reprendre la Partie Sauvée',
+    savedGameDetails: 'Ennemi : {rank} de {suit} • {cards} cartes en main',
+
     hearts: 'Cœurs',
     diamonds: 'Carreaux',
     clubs: 'Trèfles',
@@ -440,7 +465,7 @@ export const translations: Record<Language, Translations> = {
     rulesEnemiesTitle: 'Les 12 Ennemis Royaux',
     rulesEnemiesDesc: 'Valets : 20 PV / 10 Attaque • Dames : 30 PV / 15 Attaque • Rois : 40 PV / 20 Attaque. Les ennemis sont révélés séquentiellement des Valets jusqu’aux Rois.',
     rulesTurnStructureTitle: 'Déroulement d’un Tour (4 Étapes)',
-    rulesTurnStructureDesc: '1. Jouer une carte (or combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
+    rulesTurnStructureDesc: '1. Jouer une carte (ou combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
     rulesSuitsTitle: 'Pouvoirs des Enseignes (Étape 2)',
     rulesHeartsDesc: '♥️ Cœur (Soin) : Mélange la défausse et remet autant de cartes que la valeur jouée sous le paquet Taverne.',
     rulesDiamondsDesc: '♦️ Carreau (Recruter) : Les joueurs piochent dans la Taverne, un par un dans le sens horaire, jusqu’à leur limite de main.',

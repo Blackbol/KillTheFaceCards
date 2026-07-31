@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, GameMode, GameState } from '../types/game';
 import { RegicideEngine } from '../engine/RegicideEngine';
+import { clearSavedSoloGame } from '../utils/saveGame';
 import {
   createRoom as createFirebaseRoom,
   joinRoom as joinFirebaseRoom,
@@ -18,6 +19,7 @@ export interface UseGameRoomReturn {
   isLoading: boolean;
   createGame: (playerName: string, mode: GameMode) => Promise<void>;
   joinGame: (roomCode: string, playerName: string) => Promise<boolean>;
+  resumeSavedGame: (savedState: GameState) => void;
   toggleCardSelection: (cardId: string) => void;
   clearSelection: () => void;
   playSelectedCards: () => Promise<void>;
@@ -53,6 +55,11 @@ export function useGameRoom(): UseGameRoomReturn {
    */
   const updateState = useCallback(async (newState: GameState) => {
     setGameState(newState);
+    if (newState.status === 'VICTORY' || newState.status === 'GAME_OVER') {
+      if (newState.mode === 'SOLO' && newState.players.length > 0) {
+        clearSavedSoloGame(newState.players[0].name);
+      }
+    }
     if (newState.mode === 'MULTIPLAYER' && newState.roomId) {
       await pushGameState(newState.roomId, newState);
     }
@@ -110,6 +117,17 @@ export function useGameRoom(): UseGameRoomReturn {
     } finally {
       setIsLoading(false);
     }
+  }, []);
+
+  /**
+   * Resumes a previously saved game state.
+   */
+  const resumeSavedGame = useCallback((savedState: GameState) => {
+    if (!savedState || savedState.players.length === 0) return;
+    setGameState(savedState);
+    setPlayerId(savedState.players[0].id);
+    setSelectedCardIds([]);
+    setErrorMessage(null);
   }, []);
 
   /**
@@ -235,6 +253,7 @@ export function useGameRoom(): UseGameRoomReturn {
     isLoading,
     createGame,
     joinGame,
+    resumeSavedGame,
     toggleCardSelection,
     clearSelection,
     playSelectedCards,

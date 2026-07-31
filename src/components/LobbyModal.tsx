@@ -2,11 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useI18n } from '../i18n/I18nContext';
-import { User, Swords, Crown, Ban } from 'lucide-react';
+import { GameState } from '../types/game';
+import { loadSavedSoloGame } from '../utils/saveGame';
+import { User, Swords, Crown, Ban, PlayCircle } from 'lucide-react';
 
 interface LobbyModalProps {
   onCreateGame: (playerName: string, mode: 'SOLO' | 'MULTIPLAYER') => void;
   onJoinGame?: (playerName: string, roomId: string) => void;
+  onResumeGame: (savedState: GameState) => void;
   isLoading?: boolean;
   errorMessage?: string | null;
 }
@@ -15,11 +18,13 @@ const PLAYER_NAME_COOKIE = 'killthefacecards_player_name';
 
 export const LobbyModal: React.FC<LobbyModalProps> = ({
   onCreateGame,
+  onResumeGame,
   isLoading = false,
   errorMessage = null,
 }) => {
   const { t } = useI18n();
   const [gameMode, setGameMode] = useState<'SOLO' | 'MULTIPLAYER'>('SOLO');
+  const [savedGame, setSavedGame] = useState<GameState | null>(null);
 
   const [playerName, setPlayerName] = useState<string>(() => {
     return localStorage.getItem(PLAYER_NAME_COOKIE) || '';
@@ -30,6 +35,13 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
       localStorage.setItem(PLAYER_NAME_COOKIE, playerName);
     }
   }, [playerName]);
+
+  // Detect saved solo game whenever player name changes
+  useEffect(() => {
+    const targetName = playerName.trim() || t('defaultSoloName');
+    const loaded = loadSavedSoloGame(targetName);
+    setSavedGame(loaded);
+  }, [playerName, t]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +68,36 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
       {errorMessage && (
         <div className="mb-4 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs font-semibold px-3 py-2 rounded-xl text-center shadow animate-shake">
           {t(errorMessage as any) || errorMessage}
+        </div>
+      )}
+
+      {/* Resume Saved Game Banner if available */}
+      {savedGame && savedGame.currentEnemy && (
+        <div className="mb-5 bg-gradient-to-br from-amber-950/60 to-slate-950 border border-amber-500/40 p-3.5 rounded-2xl space-y-2 animate-fadeIn shadow-lg">
+          <div className="flex items-center justify-between text-xs font-bold text-amber-300">
+            <span className="flex items-center gap-1.5 font-cinzel">
+              <PlayCircle size={16} className="text-amber-400" />
+              {t('resumeSavedGame')}
+            </span>
+            <span className="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">
+              En cours
+            </span>
+          </div>
+          <p className="text-xs text-slate-300">
+            {t('savedGameDetails', {
+              rank: t(savedGame.currentEnemy.rank.toLowerCase() as any) || savedGame.currentEnemy.rank,
+              suit: t(savedGame.currentEnemy.suit.toLowerCase() as any) || savedGame.currentEnemy.suit,
+              cards: savedGame.players[0]?.hand?.length || 0,
+            })}
+          </p>
+          <button
+            type="button"
+            onClick={() => onResumeGame(savedGame)}
+            className="w-full py-2.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-cinzel font-black tracking-wider text-xs rounded-xl shadow transition-all flex items-center justify-center gap-1.5 active:scale-[0.99]"
+          >
+            <PlayCircle size={16} />
+            <span>{t('resumeSavedGame')}</span>
+          </button>
         </div>
       )}
 
@@ -132,7 +174,7 @@ export const LobbyModal: React.FC<LobbyModalProps> = ({
           ) : (
             <>
               <Swords size={18} />
-              <span>{t('startSolo')}</span>
+              <span>{savedGame ? t('startSolo') : t('startSolo')}</span>
             </>
           )}
         </button>
