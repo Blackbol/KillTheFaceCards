@@ -84,6 +84,7 @@ export class RegicideEngine {
       playedCards: [],
       pendingDamage: 0,
       discardedDamageSum: 0,
+      consecutivePassCount: 0,
       lastActionLog: [`Game started with ${playerCount} player(s). First enemy: ${firstEnemy?.rank} of ${firstEnemy?.suit}`],
       soloJokers: soloJokers || { availableCount: 0, usedCount: 0 },
       createdAt: Date.now(),
@@ -161,6 +162,9 @@ export class RegicideEngine {
       return { success: false, message: 'Player not found.', nextState: state };
     }
 
+    // Playing a card resets consecutive pass count
+    nextState.consecutivePassCount = 0;
+
     // Remove played cards from player's hand
     const cardIdsToPlay = new Set(playedCards.map((c) => c.id));
     player.hand = player.hand.filter((c) => !cardIdsToPlay.has(c.id));
@@ -230,14 +234,23 @@ export class RegicideEngine {
   }
 
   /**
-   * Resolves Joker play mechanics (cancels immunity & yields turn choice in multiplayer).
+   * Resolves Joker play mechanics: cancels enemy immunity and retroactively calculates any Spade shields played earlier.
    */
   private static handleJokerPlay(state: GameState, player: Player, enemy: Enemy): ActionResult {
     enemy.isImmunityCancelled = true;
     state.lastActionLog.push(`${player.name} played a Joker! ${enemy.rank}'s immunity cancelled.`);
 
+    // Retroactive rule for Spades against Spade enemies (Rulebook Page 9)
+    if (enemy.suit === 'SPADES') {
+      const previouslyPlayedSpades = state.playedCards.filter((c) => c.suit === 'SPADES' && !c.isJoker);
+      const retroactiveShieldSum = previouslyPlayedSpades.reduce((sum, c) => sum + c.value, 0);
+      if (retroactiveShieldSum > 0) {
+        enemy.currentShield += retroactiveShieldSum;
+        state.lastActionLog.push(`Retroactive Spade shield of +${retroactiveShieldSum} applied following Joker play.`);
+      }
+    }
+
     if (state.mode === 'SOLO') {
-      // In solo mode, Joker yields immediate turn continuation
       this.advanceToNextTurn(state);
       state.updatedAt = Date.now();
       return { success: true, message: 'Joker played in solo mode.', nextState: state };
@@ -277,14 +290,12 @@ export class RegicideEngine {
   private static resolveHeartPower(state: GameState, amount: number): void {
     if (state.discardPile.length === 0 || amount <= 0) return;
 
-    // Shuffle discard pile
     const shuffledDiscard = this.shuffleArray([...state.discardPile]);
     const healCount = Math.min(amount, shuffledDiscard.length);
 
     const healedCards = shuffledDiscard.slice(0, healCount);
     const remainingDiscard = shuffledDiscard.slice(healCount);
 
-    // Place healed cards at the BOTTOM of tavern deck (beginning of array)
     state.tavernDeck.unshift(...healedCards);
     state.discardPile = remainingDiscard;
 
@@ -315,7 +326,6 @@ export class RegicideEngine {
         consecutivePassesWithoutDraw++;
       }
 
-      // If all players have full hands, stop drawing
       if (consecutivePassesWithoutDraw >= state.players.length) {
         break;
       }
@@ -366,6 +376,7 @@ export class RegicideEngine {
       state.currentEnemy = state.castleDeck.shift()!;
       state.status = 'PLAY_CARD';
       state.currentTurnPlayerId = killingPlayerId; // Killing player immediately plays again!
+      state.consecutivePassCount = 0;
       state.lastActionLog.push(`New enemy revealed: ${state.currentEnemy.rank} of ${state.currentEnemy.suit}.`);
       state.updatedAt = Date.now();
       return { success: true, message: 'Enemy defeated! Next enemy revealed.', nextState: state };
@@ -405,28 +416,22 @@ export class RegicideEngine {
       return { success: false, message: 'No valid cards selected for discard.', nextState: state };
     }
 
-    // Calculate discard value sum
     const discardValueSum = cardsToDiscard.reduce((sum, c) => sum + c.value, 0);
 
-    // Remove discarded cards from player's hand and move to discard pile
     player.hand = player.hand.filter((c) => !discardSet.has(c.id));
     nextState.discardPile.push(...cardsToDiscard);
     nextState.discardedDamageSum += discardValueSum;
 
     nextState.lastActionLog.push(`${player.name} discarded ${cardsToDiscard.map((c) => c.rank).join(', ')} (${discardValueSum} value). Total: ${nextState.discardedDamageSum}/${nextState.pendingDamage}`);
 
-    // Check if pending damage requirement fulfilled
     if (nextState.discardedDamageSum >= nextState.pendingDamage) {
       nextState.pendingDamage = 0;
       nextState.discardedDamageSum = 0;
-      
-      // Check if player or team loses due to empty hand & no possible plays
       this.advanceToNextTurn(nextState);
       nextState.updatedAt = Date.now();
       return { success: true, message: 'Damage successfully endured.', nextState };
     }
 
-    // Check if player has run out of cards while still owing damage -> GAME OVER
     if (player.hand.length === 0 && nextState.discardedDamageSum < nextState.pendingDamage) {
       nextState.status = 'GAME_OVER';
       nextState.lastActionLog.push(`GAME OVER! ${player.name} could not endure the enemy counter-attack.`);
@@ -440,6 +445,7 @@ export class RegicideEngine {
 
   /**
    * Handles player passing their turn (skips steps 2 & 3, enters step 4).
+   * Enforces Rulebook constraint: "Un joueur ne peut pas passer si tous les autres joueurs viennent de passer avant lui."
    */
   public static passTurn(state: GameState, playerId: string): ActionResult {
     if (state.status !== 'PLAY_CARD') {
@@ -450,6 +456,11 @@ export class RegicideEngine {
       return { success: false, message: 'Not your turn to pass.', nextState: state };
     }
 
+    // Rule check: All other players passed consecutively right before this turn
+    if (state.players.length > 1 && state.consecutivePassCount >= state.players.length - 1) {
+      return { success: false, message: 'Cannot pass if all other players passed consecutively.', nextState: state };
+    }
+
     const nextState: GameState = JSON.parse(JSON.stringify(state));
     const enemy = nextState.currentEnemy;
     if (!enemy) {
@@ -457,9 +468,9 @@ export class RegicideEngine {
     }
 
     const player = nextState.players.find((p) => p.id === playerId);
+    nextState.consecutivePassCount++;
     nextState.lastActionLog.push(`${player?.name || 'Player'} passed their turn.`);
 
-    // Check effective enemy attack
     const effectiveEnemyAttack = Math.max(0, enemy.attack - enemy.currentShield);
 
     if (effectiveEnemyAttack === 0) {
@@ -493,11 +504,9 @@ export class RegicideEngine {
       return { success: false, message: 'Player not found.', nextState: state };
     }
 
-    // Discard hand to discard pile
     nextState.discardPile.push(...player.hand);
     player.hand = [];
 
-    // Draw 8 new cards from Tavern deck
     const handLimit = 8;
     while (player.hand.length < handLimit && nextState.tavernDeck.length > 0) {
       player.hand.push(nextState.tavernDeck.pop()!);
@@ -568,7 +577,6 @@ export class RegicideEngine {
       }))
     );
 
-    // Stack: Kings at bottom, Queens middle, Jacks on top
     return [...jacks, ...queens, ...kings];
   }
 
@@ -579,7 +587,6 @@ export class RegicideEngine {
     const suits: Suit[] = ['HEARTS', 'DIAMONDS', 'CLUBS', 'SPADES'];
     const cards: Card[] = [];
 
-    // Add cards 1-10 for each suit (Aces=1)
     suits.forEach((suit) => {
       for (let val = 1; val <= 10; val++) {
         const rank: Rank = val === 1 ? 'A' : (val.toString() as Rank);

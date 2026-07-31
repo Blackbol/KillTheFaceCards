@@ -91,6 +91,7 @@ export interface GameState {
   playedCards: Card[];
   pendingDamage: number;
   discardedDamageSum: number;
+  consecutivePassCount: number;
   lastActionLog: string[];
   soloJokers: SoloJokerState;
   createdAt: number;

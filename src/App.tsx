@@ -7,9 +7,12 @@ import { ActionControls } from './components/ActionControls';
 import { LobbyModal } from './components/LobbyModal';
 import { VictoryGameOverModal } from './components/VictoryGameOverModal';
 import { Footer } from './components/Footer';
+import { LanguageToggle } from './components/LanguageToggle';
+import { useI18n } from './i18n/I18nContext';
 import { Crown, LogOut, AlertCircle } from 'lucide-react';
 
 export function App() {
+  const { t } = useI18n();
   const {
     gameState,
     playerId,
@@ -41,26 +44,28 @@ export function App() {
               <Crown size={20} />
             </div>
             <span className="font-cinzel font-black text-amber-400 tracking-wider text-lg">
-              KILL THE FACE CARDS
+              {t('appTitle')}
             </span>
           </div>
 
-          {showGameScreen && (
-            <button
-              type="button"
-              onClick={resetToLobby}
-              className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-colors font-medium"
-            >
-              <LogOut size={14} />
-              <span>Leave Game</span>
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            <LanguageToggle />
+            {showGameScreen && (
+              <button
+                type="button"
+                onClick={resetToLobby}
+                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-colors font-medium"
+              >
+                <LogOut size={14} />
+                <span>{t('leaveGame')}</span>
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       {/* Main Content Area */}
       <main className="flex-1 flex flex-col items-center justify-center p-4">
-        {/* Error Alert Overlay */}
         {errorMessage && showGameScreen && (
           <div className="w-full max-w-xl mb-4 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg animate-fadeIn">
             <AlertCircle size={18} className="shrink-0" />
@@ -77,10 +82,8 @@ export function App() {
           />
         ) : (
           <div className="w-full max-w-6xl flex flex-col gap-6 items-center">
-            {/* Arena Board */}
             <GameBoard gameState={gameState} activePlayerId={playerId} />
 
-            {/* Active Player Hand */}
             {activePlayer && (
               <HandView
                 hand={activePlayer.hand}
@@ -91,7 +94,6 @@ export function App() {
               />
             )}
 
-            {/* Action Control Panel */}
             <ActionControls
               gameState={gameState}
               activePlayerId={playerId}
@@ -107,12 +109,10 @@ export function App() {
         )}
       </main>
 
-      {/* End Game Modal */}
       {gameState && (
         <VictoryGameOverModal gameState={gameState} onReset={resetToLobby} />
       )}
 
-      {/* Footer */}
       <Footer />
     </div>
   );
