@@ -337,6 +337,7 @@ describe('RegicideEngine Unit Test Suite', () => {
         { id: 'p1', name: 'Alice', isHost: true },
         { id: 'p2', name: 'Bob', isHost: false },
       ], 'TEST');
+      state.status = 'PLAY_CARD';
 
       const result = RegicideEngine.passTurn(state, 'p1');
       expect(result.success).toBe(true);
@@ -348,6 +349,7 @@ describe('RegicideEngine Unit Test Suite', () => {
         { id: 'p1', name: 'Alice', isHost: true },
         { id: 'p2', name: 'Bob', isHost: false },
       ], 'TEST');
+      state.status = 'PLAY_CARD';
 
       if (state.currentEnemy) {
         state.currentEnemy.currentShield = 10;

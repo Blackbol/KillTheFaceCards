@@ -6,14 +6,17 @@ import { GameBoard } from './components/GameBoard';
 import { HandView } from './components/HandView';
 import { ActionControls } from './components/ActionControls';
 import { LobbyModal } from './components/LobbyModal';
+import { MultiplayerLobbyView } from './components/MultiplayerLobbyView';
 import { VictoryGameOverModal } from './components/VictoryGameOverModal';
 import { SaveGameModal } from './components/SaveGameModal';
+import { JokerPlayerModal } from './components/JokerPlayerModal';
+import { PauseModal } from './components/PauseModal';
 import { RulesModal } from './components/RulesModal';
 import { Footer } from './components/Footer';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/I18nContext';
 import { saveSoloGame, clearSavedSoloGame } from './utils/saveGame';
-import { Crown, LogOut, AlertCircle, BookOpen } from 'lucide-react';
+import { Crown, LogOut, AlertCircle, BookOpen, Pause } from 'lucide-react';
 
 export function App() {
   const { t } = useI18n();
@@ -36,6 +39,9 @@ export function App() {
     passTurn,
     useSoloJoker,
     selectNextPlayerAfterJoker,
+    setTurnTimer,
+    togglePauseGame,
+    startGameFromLobby,
     resetToLobby,
   } = useGameRoom();
 
@@ -70,7 +76,9 @@ export function App() {
   };
 
   const activePlayer = gameState?.players.find((p) => p.id === playerId);
+  const isHost = activePlayer?.isHost ?? false;
   const showGameScreen = gameState && gameState.status !== 'LOBBY';
+  const showMultiplayerLobby = gameState && gameState.mode === 'MULTIPLAYER' && gameState.status === 'LOBBY';
 
   return (
     <div className="h-[100dvh] max-h-[100dvh] w-screen overflow-hidden flex flex-col justify-between bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950 font-sans touch-none">
@@ -87,6 +95,18 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            {/* Host Pause Button (Multiplayer in active game) */}
+            {showGameScreen && gameState.mode === 'MULTIPLAYER' && isHost && (
+              <button
+                type="button"
+                onClick={togglePauseGame}
+                className="flex items-center gap-1 text-[11px] sm:text-xs text-amber-400 hover:text-amber-300 bg-amber-950/40 border border-amber-500/40 px-2.5 py-1 rounded-xl transition-all font-semibold shadow-sm"
+              >
+                <Pause size={13} />
+                <span>{t('pauseGame')}</span>
+              </button>
+            )}
+
             {/* Rules Quick Reference Button */}
             <button
               type="button"
@@ -99,7 +119,7 @@ export function App() {
 
             <LanguageToggle />
 
-            {showGameScreen && (
+            {(showGameScreen || showMultiplayerLobby) && (
               <button
                 type="button"
                 onClick={handleLeaveGameClick}
@@ -122,7 +142,7 @@ export function App() {
           </div>
         )}
 
-        {!showGameScreen ? (
+        {!gameState ? (
           <div className="my-auto w-full flex justify-center overflow-y-auto no-scrollbar">
             <LobbyModal
               onCreateGame={createGame}
@@ -130,6 +150,15 @@ export function App() {
               onResumeGame={resumeSavedGame}
               isLoading={isLoading}
               errorMessage={errorMessage}
+            />
+          </div>
+        ) : showMultiplayerLobby ? (
+          <div className="my-auto w-full flex justify-center overflow-y-auto no-scrollbar">
+            <MultiplayerLobbyView
+              gameState={gameState}
+              activePlayerId={playerId}
+              onSetTurnTimer={setTurnTimer}
+              onStartGame={startGameFromLobby}
             />
           </div>
         ) : (
@@ -175,11 +204,25 @@ export function App() {
         onCancel={() => setIsSaveModalOpen(false)}
       />
 
+      {/* Joker Yield Player Picker Modal */}
+      <JokerPlayerModal
+        gameState={gameState}
+        activePlayerId={playerId}
+        onSelectPlayer={selectNextPlayerAfterJoker}
+      />
+
+      {/* Full-Screen Pause Modal */}
+      <PauseModal
+        gameState={gameState}
+        activePlayerId={playerId}
+        onTogglePause={togglePauseGame}
+      />
+
       {/* Rules Reference Drawer / Modal */}
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
 
       {/* Footer ALWAYS Visible */}
-      <Footer compact={Boolean(showGameScreen)} />
+      <Footer compact={Boolean(showGameScreen || showMultiplayerLobby)} />
     </div>
   );
 }

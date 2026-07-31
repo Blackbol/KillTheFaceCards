@@ -5,6 +5,7 @@ import {
   Enemy,
   GameMode,
   GameState,
+  GameStep,
   Player,
   Rank,
   Suit,
@@ -73,11 +74,12 @@ export class RegicideEngine {
     }
 
     const initialPlayerId = players[0]?.id || '';
+    const initialStatus: GameStep = mode === 'MULTIPLAYER' ? 'LOBBY' : 'PLAY_CARD';
 
     return {
       roomId,
       mode,
-      status: 'PLAY_CARD',
+      status: initialStatus,
       players,
       currentTurnPlayerId: initialPlayerId,
       currentEnemy: firstEnemy,
@@ -612,5 +614,56 @@ export class RegicideEngine {
       [copy[i], copy[j]] = [copy[j], copy[i]];
     }
     return copy;
+  }
+
+  /**
+   * Updates turn timer settings (Host only).
+   */
+  public static setTurnTimer(state: GameState, hostPlayerId: string, seconds: number): ActionResult {
+    const host = state.players.find((p) => p.id === hostPlayerId);
+    if (!host || !host.isHost) {
+      return { success: false, message: 'Only the host can configure turn timer.', nextState: state };
+    }
+    const nextState: GameState = JSON.parse(JSON.stringify(state));
+    nextState.turnTimer = {
+      enabled: seconds > 0,
+      seconds,
+    };
+    nextState.updatedAt = Date.now();
+    return { success: true, message: 'Turn timer updated.', nextState };
+  }
+
+  /**
+   * Toggles pause status (Host only).
+   */
+  public static togglePauseGame(state: GameState, hostPlayerId: string): ActionResult {
+    const host = state.players.find((p) => p.id === hostPlayerId);
+    if (!host || !host.isHost) {
+      return { success: false, message: 'Only the host can pause/unpause the game.', nextState: state };
+    }
+    const nextState: GameState = JSON.parse(JSON.stringify(state));
+    nextState.isPaused = !nextState.isPaused;
+    nextState.lastActionLog.push(
+      this.log(nextState.isPaused ? 'logGamePaused' : 'logGameResumed', { name: host.name })
+    );
+    nextState.updatedAt = Date.now();
+    return { success: true, message: nextState.isPaused ? 'Game paused.' : 'Game resumed.', nextState };
+  }
+
+  /**
+   * Starts game from LOBBY status (Host only).
+   */
+  public static startGameFromLobby(state: GameState, hostPlayerId: string): ActionResult {
+    const host = state.players.find((p) => p.id === hostPlayerId);
+    if (!host || !host.isHost) {
+      return { success: false, message: 'Only the host can start the game.', nextState: state };
+    }
+    const nextState = this.createNewGame(state.mode, state.players, state.roomId);
+    nextState.status = 'PLAY_CARD';
+    if (state.turnTimer) {
+      nextState.turnTimer = state.turnTimer;
+    }
+    nextState.updatedAt = Date.now();
+    return { success: true, message: 'Game started!', nextState };
   }
 }

@@ -27,6 +27,9 @@ export interface UseGameRoomReturn {
   passTurn: () => Promise<void>;
   useSoloJoker: () => Promise<void>;
   selectNextPlayerAfterJoker: (targetPlayerId: string) => Promise<void>;
+  setTurnTimer: (seconds: number) => Promise<void>;
+  togglePauseGame: () => Promise<void>;
+  startGameFromLobby: () => Promise<void>;
   resetToLobby: () => void;
 }
 
@@ -129,6 +132,51 @@ export function useGameRoom(): UseGameRoomReturn {
     setSelectedCardIds([]);
     setErrorMessage(null);
   }, []);
+
+  /**
+   * Configures turn timer (Host only).
+   */
+  const setTurnTimer = useCallback(
+    async (seconds: number) => {
+      if (!gameState || !playerId) return;
+      const result = RegicideEngine.setTurnTimer(gameState, playerId, seconds);
+      if (result.success) {
+        setErrorMessage(null);
+        await updateState(result.nextState);
+      } else {
+        setErrorMessage(result.message);
+      }
+    },
+    [gameState, playerId, updateState]
+  );
+
+  /**
+   * Toggles game pause state (Host only).
+   */
+  const togglePauseGame = useCallback(async () => {
+    if (!gameState || !playerId) return;
+    const result = RegicideEngine.togglePauseGame(gameState, playerId);
+    if (result.success) {
+      setErrorMessage(null);
+      await updateState(result.nextState);
+    } else {
+      setErrorMessage(result.message);
+    }
+  }, [gameState, playerId, updateState]);
+
+  /**
+   * Starts game from LOBBY status (Host only).
+   */
+  const startGameFromLobby = useCallback(async () => {
+    if (!gameState || !playerId) return;
+    const result = RegicideEngine.startGameFromLobby(gameState, playerId);
+    if (result.success) {
+      setErrorMessage(null);
+      await updateState(result.nextState);
+    } else {
+      setErrorMessage(result.message);
+    }
+  }, [gameState, playerId, updateState]);
 
   /**
    * Toggles selection state of a card in hand.
@@ -261,6 +309,9 @@ export function useGameRoom(): UseGameRoomReturn {
     passTurn,
     useSoloJoker,
     selectNextPlayerAfterJoker,
+    setTurnTimer,
+    togglePauseGame,
+    startGameFromLobby,
     resetToLobby,
   };
 }
