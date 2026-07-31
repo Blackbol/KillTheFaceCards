@@ -29,15 +29,32 @@ let appInstance: FirebaseApp | null = null;
 let dbInstance: Database | null = null;
 
 /**
+ * Wraps a promise with a timeout limit (e.g. 5 seconds).
+ */
+function withTimeout<T>(promise: Promise<T>, ms = 5000, errorMsg = 'Firebase operation timed out.'): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(errorMsg)), ms)
+    ),
+  ]);
+}
+
+/**
  * Safely retrieves or initializes the Firebase Realtime Database instance.
- * Returns null if environment variables are not configured (Offline / Solo mode).
+ * Returns null if environment variables are not configured or contain placeholders.
  */
 export function getDatabaseInstance(): Database | null {
   if (dbInstance) return dbInstance;
 
-  // Check if databaseURL is configured before attempting initialization
-  if (!firebaseConfig.databaseURL || !firebaseConfig.apiKey) {
-    console.info('[Firebase] No remote credentials found in environment. Running in offline mode.');
+  // Check if databaseURL & apiKey are configured and not placeholders
+  if (
+    !firebaseConfig.databaseURL ||
+    !firebaseConfig.apiKey ||
+    firebaseConfig.apiKey.includes('your_') ||
+    firebaseConfig.databaseURL.includes('your_')
+  ) {
+    console.info('[Firebase] No valid remote credentials found in environment. Running in offline mode.');
     return null;
   }
 
@@ -75,19 +92,22 @@ export async function createRoom(
   mode: GameMode = 'MULTIPLAYER'
 ): Promise<{ roomId: string; playerId: string; initialState: GameState }> {
   const db = getDatabaseInstance();
+  if (!db) {
+    throw new Error('errFirebaseUnavailable');
+  }
+
   const roomId = generateRoomCode();
   const hostId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
 
   const playerConfigs = [{ id: hostId, name: hostName, isHost: true }];
   const initialState = RegicideEngine.createNewGame(mode, playerConfigs, roomId);
 
-  if (db) {
-    try {
-      const roomRef = ref(db, `rooms/${roomId}`);
-      await set(roomRef, initialState);
-    } catch (err) {
-      console.warn('[Firebase] Could not push room to remote database:', err);
-    }
+  try {
+    const roomRef = ref(db, `rooms/${roomId}`);
+    await withTimeout(set(roomRef, initialState), 5000, 'errFirebaseUnavailable');
+  } catch (err) {
+    console.warn('[Firebase] Could not push room to remote database:', err);
+    throw new Error('errFirebaseUnavailable');
   }
 
   return { roomId, playerId: hostId, initialState };
@@ -102,37 +122,41 @@ export async function joinRoom(
 ): Promise<{ success: boolean; playerId?: string; error?: string }> {
   const db = getDatabaseInstance();
   if (!db) {
-    return { success: false, error: 'Firebase is not configured. Please set VITE_FIREBASE_DATABASE_URL in .env.' };
+    return { success: false, error: 'errFirebaseUnavailable' };
   }
 
-  const cleanRoomId = roomId.trim().toUpperCase();
-  const roomRef = ref(db, `rooms/${cleanRoomId}`);
-  const snapshot = await get(roomRef);
+  try {
+    const cleanRoomId = roomId.trim().toUpperCase();
+    const roomRef = ref(db, `rooms/${cleanRoomId}`);
+    const snapshot = await withTimeout(get(roomRef), 5000, 'errFirebaseUnavailable');
 
-  if (!snapshot.exists()) {
-    return { success: false, error: 'Room not found. Check code.' };
+    if (!snapshot.exists()) {
+      return { success: false, error: 'errRoomNotFound' };
+    }
+
+    const state: GameState = snapshot.val();
+
+    if (state.status !== 'LOBBY') {
+      return { success: false, error: 'errGameAlreadyStarted' };
+    }
+
+    if (state.players.length >= 4) {
+      return { success: false, error: 'errRoomFull' };
+    }
+
+    const playerId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
+    const updatedPlayers = [
+      ...state.players,
+      { id: playerId, name: playerName, isHost: false, isConnected: true, hand: [] }
+    ];
+
+    const updatedState = RegicideEngine.createNewGame(state.mode, updatedPlayers, cleanRoomId);
+    await withTimeout(set(roomRef, updatedState), 5000, 'errFirebaseUnavailable');
+
+    return { success: true, playerId };
+  } catch (err: any) {
+    return { success: false, error: err.message || 'errFirebaseUnavailable' };
   }
-
-  const state: GameState = snapshot.val();
-
-  if (state.status !== 'LOBBY') {
-    return { success: false, error: 'Game has already started in this room.' };
-  }
-
-  if (state.players.length >= 4) {
-    return { success: false, error: 'Room is full (max 4 players).' };
-  }
-
-  const playerId = `player-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`;
-  const updatedPlayers = [
-    ...state.players,
-    { id: playerId, name: playerName, isHost: false, isConnected: true, hand: [] }
-  ];
-
-  const updatedState = RegicideEngine.createNewGame(state.mode, updatedPlayers, cleanRoomId);
-  await set(roomRef, updatedState);
-
-  return { success: true, playerId };
 }
 
 /**
