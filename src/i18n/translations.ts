@@ -9,6 +9,7 @@ export interface Translations {
   mode: string;
   solo: string;
   multiplayer: string;
+  multiplayerDisabled: string;
   create: string;
   join: string;
   startSolo: string;
@@ -166,6 +167,7 @@ export const translations: Record<Language, Translations> = {
     mode: 'MODE',
     solo: 'Solo',
     multiplayer: 'Multiplayer',
+    multiplayerDisabled: 'Multiplayer (Coming Soon)',
     create: 'Create',
     join: 'Join',
     startSolo: 'Start Solo Game',
@@ -315,6 +317,7 @@ export const translations: Record<Language, Translations> = {
     mode: 'MODE',
     solo: 'Solo',
     multiplayer: 'Multijoueur',
+    multiplayerDisabled: 'Multijoueur (Bientôt disponible)',
     create: 'Créer',
     join: 'Rejoindre',
     startSolo: 'Démarrer Partie Solo',
@@ -437,7 +440,7 @@ export const translations: Record<Language, Translations> = {
     rulesEnemiesTitle: 'Les 12 Ennemis Royaux',
     rulesEnemiesDesc: 'Valets : 20 PV / 10 Attaque • Dames : 30 PV / 15 Attaque • Rois : 40 PV / 20 Attaque. Les ennemis sont révélés séquentiellement des Valets jusqu’aux Rois.',
     rulesTurnStructureTitle: 'Déroulement d’un Tour (4 Étapes)',
-    rulesTurnStructureDesc: '1. Jouer une carte (ou combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
+    rulesTurnStructureDesc: '1. Jouer une carte (or combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
     rulesSuitsTitle: 'Pouvoirs des Enseignes (Étape 2)',
     rulesHeartsDesc: '♥️ Cœur (Soin) : Mélange la défausse et remet autant de cartes que la valeur jouée sous le paquet Taverne.',
     rulesDiamondsDesc: '♦️ Carreau (Recruter) : Les joueurs piochent dans la Taverne, un par un dans le sens horaire, jusqu’à leur limite de main.',
