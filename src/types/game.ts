@@ -105,4 +105,5 @@ export interface ActionResult {
   success: boolean;
   message: string;
   nextState: GameState;
+  params?: Record<string, string | number>;
 }

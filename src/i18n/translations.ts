@@ -34,6 +34,7 @@ export interface Translations {
   clear: string;
   discardSelected: string;
   endureDamage: string;
+  discardValue: string;
   jokerPlayedSelectNext: string;
   jokerPlayedDescription: string;
   victory: string;
@@ -189,7 +190,8 @@ export const translations: Record<Language, Translations> = {
     useSoloJoker: 'Use Solo Joker ({count} left)',
     clear: 'Clear',
     discardSelected: 'Discard Selected Cards',
-    endureDamage: 'Endure Damage: {current} / {required} HP required',
+    endureDamage: 'Damage to Endure: {current} / {required} HP',
+    discardValue: 'Discard Value',
     jokerPlayedSelectNext: 'Joker Played! Select Next Player',
     jokerPlayedDescription: 'Choose which teammate will take the next turn against the active enemy.',
     victory: 'VICTORY!',
@@ -337,7 +339,8 @@ export const translations: Record<Language, Translations> = {
     useSoloJoker: 'Utiliser Joker Solo ({count} restant(s))',
     clear: 'Effacer',
     discardSelected: 'Défausser les cartes sélectionnées',
-    endureDamage: 'Encaisser Dégâts : {current} / {required} PV requis',
+    endureDamage: 'Subir les Dégâts : {current} / {required} PV',
+    discardValue: 'Valeur de Défausse',
     jokerPlayedSelectNext: 'Joker Joué ! Désignez le Prochain Joueur',
     jokerPlayedDescription: 'Choisissez le coéquipier qui prendra le prochain tour contre l’ennemi actuel.',
     victory: 'VICTOIRE !',

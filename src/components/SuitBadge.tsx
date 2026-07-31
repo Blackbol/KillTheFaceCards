@@ -16,7 +16,7 @@ export const SuitBadge: React.FC<SuitBadgeProps> = ({ suit, size = 18, showText 
 
   if (!suit) {
     return (
-      <span className="inline-flex items-center gap-1 font-semibold text-purple-400">
+      <span className="inline-flex items-center gap-1 font-semibold text-purple-400 align-middle leading-none">
         ★ {showText && t('joker')}
       </span>
     );
@@ -25,29 +25,29 @@ export const SuitBadge: React.FC<SuitBadgeProps> = ({ suit, size = 18, showText 
   switch (suit) {
     case 'HEARTS':
       return (
-        <span className="inline-flex items-center gap-1 font-semibold text-rose-500">
-          <Heart size={size} className="fill-rose-500/20" />
+        <span className="inline-flex items-center gap-1 font-semibold text-rose-500 align-middle leading-none">
+          <Heart size={size} className="fill-rose-500/20 shrink-0" />
           {showText && t('hearts')}
         </span>
       );
     case 'DIAMONDS':
       return (
-        <span className="inline-flex items-center gap-1 font-semibold text-blue-500">
-          <Diamond size={size} className="fill-blue-500/20" />
+        <span className="inline-flex items-center gap-1 font-semibold text-blue-500 align-middle leading-none">
+          <Diamond size={size} className="fill-blue-500/20 shrink-0" />
           {showText && t('diamonds')}
         </span>
       );
     case 'CLUBS':
       return (
-        <span className="inline-flex items-center gap-1 font-semibold text-emerald-500">
-          <Club size={size} className="fill-emerald-500/20" />
+        <span className="inline-flex items-center gap-1 font-semibold text-emerald-500 align-middle leading-none">
+          <Club size={size} className="fill-emerald-500/20 shrink-0" />
           {showText && t('clubs')}
         </span>
       );
     case 'SPADES':
       return (
-        <span className="inline-flex items-center gap-1 font-semibold text-slate-400">
-          <Shield size={size} className="fill-slate-400/20" />
+        <span className="inline-flex items-center gap-1 font-semibold text-slate-400 align-middle leading-none">
+          <Shield size={size} className="fill-slate-400/20 shrink-0" />
           {showText && t('spades')}
         </span>
       );

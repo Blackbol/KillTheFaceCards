@@ -100,7 +100,7 @@ export class RegicideEngine {
   /**
    * Validates if a set of cards forms a legal play combination according to Regicide rules.
    */
-  public static validatePlayedCards(cards: Card[]): { valid: boolean; reason?: string } {
+  public static validatePlayedCards(cards: Card[]): { valid: boolean; reason?: string; params?: Record<string, string | number> } {
     if (cards.length === 0) {
       return { valid: false, reason: 'errNoCardsSelected' };
     }
@@ -134,7 +134,7 @@ export class RegicideEngine {
 
     const totalSum = cards.reduce((sum, c) => sum + c.value, 0);
     if (totalSum > 10) {
-      return { valid: false, reason: 'errComboMaxSum' };
+      return { valid: false, reason: 'errComboMaxSum', params: { sum: totalSum } };
     }
 
     return { valid: true };

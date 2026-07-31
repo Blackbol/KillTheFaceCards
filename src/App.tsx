@@ -43,27 +43,27 @@ export function App() {
   const showGameScreen = gameState && gameState.status !== 'LOBBY';
 
   return (
-    <div className="min-h-screen flex flex-col justify-between bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950 font-sans">
+    <div className="h-[100dvh] max-h-[100dvh] w-screen overflow-hidden flex flex-col justify-between bg-slate-950 text-slate-100 selection:bg-amber-500 selection:text-slate-950 font-sans touch-none">
       {/* Top Navbar */}
-      <header className="w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
+      <header className="w-full border-b border-slate-900 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40 px-3 py-1.5 sm:px-4 sm:py-2 shrink-0">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-2 cursor-pointer" onClick={handleLeaveGame}>
-            <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
-              <Crown size={20} />
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
+              <Crown size={18} />
             </div>
-            <span className="font-cinzel font-black text-amber-400 tracking-wider text-lg">
+            <span className="font-cinzel font-black text-amber-400 tracking-wider text-sm sm:text-base">
               {t('appTitle')}
             </span>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             {/* Rules Quick Reference Button */}
             <button
               type="button"
               onClick={() => setIsRulesOpen(true)}
-              className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-xl transition-all font-semibold shadow-sm"
+              className="flex items-center gap-1 text-[11px] sm:text-xs text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/30 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl transition-all font-semibold shadow-sm"
             >
-              <BookOpen size={14} />
+              <BookOpen size={13} />
               <span>{t('rulesQuickRef')}</span>
             </button>
 
@@ -73,9 +73,9 @@ export function App() {
               <button
                 type="button"
                 onClick={handleLeaveGame}
-                className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-colors font-medium"
+                className="flex items-center gap-1 text-[11px] sm:text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-xl transition-colors font-medium"
               >
-                <LogOut size={14} />
+                <LogOut size={13} />
                 <span>{t('leaveGame')}</span>
               </button>
             )}
@@ -83,24 +83,26 @@ export function App() {
         </div>
       </header>
 
-      {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-center p-4">
+      {/* Main Content Area: Zero Scroll Viewport */}
+      <main className="flex-1 flex flex-col items-center justify-between p-1.5 sm:p-3 overflow-hidden min-h-0 pb-16 md:pb-1">
         {errorMessage && showGameScreen && (
-          <div className="w-full max-w-xl mb-4 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-4 py-3 rounded-2xl flex items-center gap-2 shadow-lg animate-fadeIn">
-            <AlertCircle size={18} className="shrink-0" />
+          <div className="w-full max-w-xl mb-1 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-3 py-1 rounded-xl flex items-center gap-2 shadow-lg animate-fadeIn shrink-0 z-20">
+            <AlertCircle size={15} className="shrink-0" />
             <span>{t(errorMessage as any) || errorMessage}</span>
           </div>
         )}
 
         {!showGameScreen ? (
-          <LobbyModal
-            onCreateGame={createGame}
-            onJoinGame={joinGame}
-            isLoading={isLoading}
-            errorMessage={errorMessage}
-          />
+          <div className="my-auto w-full flex justify-center overflow-y-auto no-scrollbar">
+            <LobbyModal
+              onCreateGame={createGame}
+              onJoinGame={joinGame}
+              isLoading={isLoading}
+              errorMessage={errorMessage}
+            />
+          </div>
         ) : (
-          <div className="w-full max-w-6xl flex flex-col gap-6 items-center">
+          <div className="w-full max-w-6xl flex-1 flex flex-col justify-between items-center gap-1 min-h-0 overflow-hidden">
             <GameBoard gameState={gameState} activePlayerId={playerId} />
 
             {activePlayer && (
@@ -109,6 +111,7 @@ export function App() {
                 selectedCardIds={selectedCardIds}
                 onToggleSelect={toggleCardSelection}
                 currentEnemy={gameState.currentEnemy}
+                gameState={gameState}
                 disabled={gameState.currentTurnPlayerId !== playerId && gameState.status !== 'YIELD_JOKER_CHOICE'}
               />
             )}
@@ -136,7 +139,8 @@ export function App() {
       {/* Rules Reference Drawer / Modal */}
       <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
 
-      <Footer />
+      {/* Footer ALWAYS Visible */}
+      <Footer compact={Boolean(showGameScreen)} />
     </div>
   );
 }
