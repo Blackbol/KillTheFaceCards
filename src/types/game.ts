@@ -52,13 +52,14 @@ export interface Player {
 }
 
 /**
- * Lifecycle steps of a active game session.
+ * Lifecycle steps of an active game session.
  */
 export type GameStep = 
   | 'LOBBY'
   | 'PLAY_CARD'
   | 'YIELD_JOKER_CHOICE'
   | 'DISCARD_DAMAGE'
+  | 'PAUSED'
   | 'VICTORY'
   | 'GAME_OVER';
 
@@ -73,6 +74,14 @@ export type GameMode = 'SOLO' | 'MULTIPLAYER';
 export interface SoloJokerState {
   availableCount: number; // 2 at game start
   usedCount: number;
+}
+
+/**
+ * Turn timer settings configured by the room host.
+ */
+export interface TurnTimerSettings {
+  enabled: boolean;
+  seconds: number; // e.g. 30, 60, 90, 0 = unlimited
 }
 
 /**
@@ -94,6 +103,8 @@ export interface GameState {
   consecutivePassCount: number;
   lastActionLog: string[];
   soloJokers: SoloJokerState;
+  turnTimer?: TurnTimerSettings;
+  isPaused?: boolean;
   createdAt: number;
   updatedAt: number;
 }

@@ -79,6 +79,21 @@ export interface Translations {
   resumeSavedGame: string;
   savedGameDetails: string;
 
+  // Lobby Waiting Room & Pause & Timer
+  copyCode: string;
+  codeCopied: string;
+  turnTimerLabel: string;
+  unlimitedTimer: string;
+  timerSeconds: string;
+  waitingRoomTitle: string;
+  playersInLobby: string;
+  startGameBtn: string;
+  gamePausedTitle: string;
+  gamePausedDesc: string;
+  resumeGame: string;
+  pauseGame: string;
+  hostBadge: string;
+
   // Suits
   hearts: string;
   diamonds: string;
@@ -116,6 +131,8 @@ export interface Translations {
   logHeartHealed: string;
   logDiamondRecruited: string;
   logShieldBlocked: string;
+  logGamePaused: string;
+  logGameResumed: string;
 
   // Error & Validation translations
   errNoCardsSelected: string;
@@ -245,6 +262,20 @@ export const translations: Record<Language, Translations> = {
     resumeSavedGame: 'Resume Saved Solo Game',
     savedGameDetails: 'Enemy: {rank} of {suit} • {cards} cards in hand',
 
+    copyCode: 'Copy Room Code',
+    codeCopied: 'Code Copied!',
+    turnTimerLabel: 'Turn Auto-Pass Timer',
+    unlimitedTimer: 'Unlimited (Disabled)',
+    timerSeconds: '{sec} seconds',
+    waitingRoomTitle: 'Multiplayer Lobby',
+    playersInLobby: 'Connected Players ({current}/{max})',
+    startGameBtn: 'Start Game',
+    gamePausedTitle: 'GAME PAUSED',
+    gamePausedDesc: 'The host has paused the game. Waiting for resume...',
+    resumeGame: 'Resume Game',
+    pauseGame: 'Pause Game',
+    hostBadge: 'Host',
+
     hearts: 'Hearts',
     diamonds: 'Diamonds',
     clubs: 'Clubs',
@@ -278,6 +309,8 @@ export const translations: Record<Language, Translations> = {
     logHeartHealed: 'Heart power healed {count} card(s) back into the Tavern deck.',
     logDiamondRecruited: 'Diamond power recruited {count} card(s) across players.',
     logShieldBlocked: 'Enemy attack completely blocked by shield! Turn passes.',
+    logGamePaused: 'Game paused by host ({name}).',
+    logGameResumed: 'Game resumed by host ({name}).',
 
     errNoCardsSelected: 'No cards selected.',
     errJokerAlone: 'Jokers must be played alone.',
@@ -403,6 +436,20 @@ export const translations: Record<Language, Translations> = {
     resumeSavedGame: 'Reprendre la Partie Sauvée',
     savedGameDetails: 'Ennemi : {rank} de {suit} • {cards} cartes en main',
 
+    copyCode: 'Copier le Code',
+    codeCopied: 'Code Copié !',
+    turnTimerLabel: 'Minuteur par Tour (Auto-Pass)',
+    unlimitedTimer: 'Sans limite (Désactivé)',
+    timerSeconds: '{sec} secondes',
+    waitingRoomTitle: 'Salon Multijoueur',
+    playersInLobby: 'Joueurs connectés ({current}/{max})',
+    startGameBtn: 'Démarrer la Partie',
+    gamePausedTitle: 'PARTIE EN PAUSE',
+    gamePausedDesc: 'L’hôte a mis la partie en pause. En attente de la reprise...',
+    resumeGame: 'Reprendre la Partie',
+    pauseGame: 'Mettre en Pause',
+    hostBadge: 'Hôte',
+
     hearts: 'Cœurs',
     diamonds: 'Carreaux',
     clubs: 'Trèfles',
@@ -436,6 +483,8 @@ export const translations: Record<Language, Translations> = {
     logHeartHealed: 'Pouvoir Cœur : {count} carte(s) soignée(s) sous la Taverne.',
     logDiamondRecruited: 'Pouvoir Carreau : {count} carte(s) recrutée(s) parmi les joueurs.',
     logShieldBlocked: 'Attaque de l’ennemi complètement bloquée par le bouclier ! Le tour passe.',
+    logGamePaused: 'Partie mise en pause par l’hôte ({name}).',
+    logGameResumed: 'Partie reprise par l’hôte ({name}).',
 
     errNoCardsSelected: 'Aucune carte sélectionnée.',
     errJokerAlone: 'Le Joker doit être joué seul.',
