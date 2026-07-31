@@ -64,9 +64,9 @@ export interface Translations {
   legalFooter: string;
   regicideDesignBy: string;
   noOfficialArt: string;
-  court: string;
   connecting: string;
   handLimitsInfo: string;
+  rulesQuickRef: string;
   
   // Suits
   hearts: string;
@@ -75,7 +75,7 @@ export interface Translations {
   spades: string;
   joker: string;
 
-  // Enemy & Card Ranks
+  // Enemy Ranks
   jack: string;
   queen: string;
   king: string;
@@ -128,6 +128,33 @@ export interface Translations {
   errRoomNotFound: string;
   errGameAlreadyStarted: string;
   errRoomFull: string;
+
+  // Official Rulebook Reference
+  rulesTitle: string;
+  rulesGoalTitle: string;
+  rulesGoalDesc: string;
+  rulesEnemiesTitle: string;
+  rulesEnemiesDesc: string;
+  rulesTurnStructureTitle: string;
+  rulesTurnStructureDesc: string;
+  rulesSuitsTitle: string;
+  rulesHeartsDesc: string;
+  rulesDiamondsDesc: string;
+  rulesClubsDesc: string;
+  rulesSpadesDesc: string;
+  rulesImmunityTitle: string;
+  rulesImmunityDesc: string;
+  rulesCombosTitle: string;
+  rulesCombosDesc: string;
+  rulesAcesTitle: string;
+  rulesAcesDesc: string;
+  rulesExecutionTitle: string;
+  rulesExecutionDesc: string;
+  rulesCounterTitle: string;
+  rulesCounterDesc: string;
+  rulesPassingTitle: string;
+  rulesPassingDesc: string;
+  close: string;
 }
 
 export const translations: Record<Language, Translations> = {
@@ -193,9 +220,9 @@ export const translations: Record<Language, Translations> = {
     legalFooter: 'Kill The Face Cards is a 100% free, fan-made web adaptation based on the mechanics of the cooperative card game Regicide.',
     regicideDesignBy: 'Regicide original game design by Paul Abrahams, Luke Badger & Andy Richdale. Published by Badgers from Mars and Iello.',
     noOfficialArt: 'No official trademarks or artwork used. Standard 54-card deck mechanics. 0 ads, 0 tracking.',
-    court: 'Court',
     connecting: 'Connecting...',
     handLimitsInfo: 'Solo (8 limit) • 2 Players (7 limit) • 3 Players (6 limit) • 4 Players (5 limit)',
+    rulesQuickRef: 'Rules',
 
     hearts: 'Hearts',
     diamonds: 'Diamonds',
@@ -252,6 +279,32 @@ export const translations: Record<Language, Translations> = {
     errRoomNotFound: 'Room not found. Check code.',
     errGameAlreadyStarted: 'Game has already started in this room.',
     errRoomFull: 'Room is full (max 4 players).',
+
+    rulesTitle: 'Official Rulebook & Game Mechanics',
+    rulesGoalTitle: 'Objective of the Game',
+    rulesGoalDesc: 'Defeat all 12 members of the Royal Court (4 Jacks, 4 Queens, 4 Kings) stacked in the Castle Deck. Work together to survive their formidable counter-attacks.',
+    rulesEnemiesTitle: 'The 12 Royal Enemies',
+    rulesEnemiesDesc: 'Jacks: 20 HP / 10 Attack • Queens: 30 HP / 15 Attack • Kings: 40 HP / 20 Attack. Enemies are revealed sequentially from Jacks up to Kings.',
+    rulesTurnStructureTitle: 'Turn Structure (4 Steps)',
+    rulesTurnStructureDesc: '1. Play a card (or combo) or pass • 2. Apply Suit Power • 3. Deal damage & check enemy defeat • 4. Endure enemy counter-attack damage by discarding.',
+    rulesSuitsTitle: 'Suit Powers (Step 2)',
+    rulesHeartsDesc: '♥️ Hearts (Heal): Shuffles discard pile and places cards equal to played value at the bottom of the Tavern deck.',
+    rulesDiamondsDesc: '♦️ Diamonds (Recruit): Players draw cards from the Tavern deck clockwise up to their maximum hand limits.',
+    rulesClubsDesc: '♣️ Clubs (Double Damage): Doubles the attack damage dealt in Step 3.',
+    rulesSpadesDesc: '♠️ Spades (Shield): Reduces the enemy\'s attack value for Step 4. Shields remain active until the current enemy is slain.',
+    rulesImmunityTitle: 'Enemy Immunity & Jokers',
+    rulesImmunityDesc: 'Each enemy is immune to the power of their own suit (e.g. Jack of Spades ignores Spade shields). Playing a Joker cancels the active enemy\'s suit immunity!',
+    rulesCombosTitle: 'Combinations (Combos)',
+    rulesCombosDesc: 'Cards of identical rank can be played together if their total sum <= 10 (e.g., pair of 2s, 3s, 4s, 5s, or triple 2s, 3s). All suit powers apply!',
+    rulesAcesTitle: 'Aces (Companions)',
+    rulesAcesDesc: 'Aces (1 Value) can be played with any single card to add +1 attack and activate a second suit power! Heart powers always resolve BEFORE Diamond powers.',
+    rulesExecutionTitle: 'Perfect Execution vs Excess Damage',
+    rulesExecutionDesc: 'If an enemy is reduced to EXACTLY 0 HP, it is placed FACE DOWN on TOP of the Tavern deck as a recruit! If HP < 0 (Excess Damage), it goes to the Discard pile.',
+    rulesCounterTitle: 'Enduring Counter-Attack (Step 4)',
+    rulesCounterDesc: 'If the enemy is not slain, the active player must discard cards from hand totaling >= net enemy attack (Base Atk minus Spade shield). Failing to discard enough causes Game Over.',
+    rulesPassingTitle: 'Passing Turn',
+    rulesPassingDesc: 'A player may pass their turn (unless all other players passed consecutively). Passing skips Step 2 & 3, but the player MUST still endure the enemy counter-attack in Step 4!',
+    close: 'Close',
   },
   fr: {
     appTitle: 'KILL THE FACE CARDS',
@@ -315,9 +368,9 @@ export const translations: Record<Language, Translations> = {
     legalFooter: 'Kill The Face Cards est une adaptation web fan-made 100 % gratuite basée sur les mécaniques du jeu coopératif Régicide.',
     regicideDesignBy: 'Régicide conçu par Paul Abrahams, Luke Badger & Andy Richdale. Publié par Badgers from Mars et Iello.',
     noOfficialArt: 'Aucune illustration ou marque officielle utilisée. Jeu de 54 cartes traditionnel. 0 pub, 0 tracking.',
-    court: 'Cour',
     connecting: 'Connexion...',
     handLimitsInfo: 'Solo (8 max) • 2 Joueurs (7 max) • 3 Joueurs (6 max) • 4 Joueurs (5 max)',
+    rulesQuickRef: 'Règles',
 
     hearts: 'Cœurs',
     diamonds: 'Carreaux',
@@ -374,5 +427,31 @@ export const translations: Record<Language, Translations> = {
     errRoomNotFound: 'Salon non trouvé. Vérifiez le code.',
     errGameAlreadyStarted: 'La partie a déjà commencé dans ce salon.',
     errRoomFull: 'Le salon est complet (max 4 joueurs).',
+
+    rulesTitle: 'Livret de Règles Officiel & Guide du Jeu',
+    rulesGoalTitle: 'Objectif du Jeu',
+    rulesGoalDesc: 'Vaincre ensemble les 12 ennemis de la Cour Royale (4 Valets, 4 Dames, 4 Rois) empilés dans le Paquet Château, en résistant à leurs redoutables ripostes.',
+    rulesEnemiesTitle: 'Les 12 Ennemis Royaux',
+    rulesEnemiesDesc: 'Valets : 20 PV / 10 Attaque • Dames : 30 PV / 15 Attaque • Rois : 40 PV / 20 Attaque. Les ennemis sont révélés séquentiellement des Valets jusqu’aux Rois.',
+    rulesTurnStructureTitle: 'Déroulement d’un Tour (4 Étapes)',
+    rulesTurnStructureDesc: '1. Jouer une carte (ou combo) ou passer • 2. Appliquer le pouvoir de l’enseigne • 3. Infliger les dégâts & vérifier la défaite • 4. Encaisser la riposte en défaussant.',
+    rulesSuitsTitle: 'Pouvoirs des Enseignes (Étape 2)',
+    rulesHeartsDesc: '♥️ Cœur (Soin) : Mélange la défausse et remet autant de cartes que la valeur jouée sous le paquet Taverne.',
+    rulesDiamondsDesc: '♦️ Carreau (Recruter) : Les joueurs piochent dans la Taverne, un par un dans le sens horaire, jusqu’à leur limite de main.',
+    rulesClubsDesc: '♣️ Trèfle (Dégâts x2) : Double les dégâts d’attaque infligés à l’étape 3.',
+    rulesSpadesDesc: '♠️ Pique (Bouclier) : Réduit l’attaque de l’ennemi pour l’étape 4. Les boucliers restent actifs jusqu’à la défaite de l’ennemi.',
+    rulesImmunityTitle: 'Immunités des Ennemis & Jokers',
+    rulesImmunityDesc: 'Chaque ennemi est immunisé au pouvoir de sa propre enseigne (ex: le Valet de Pique annule le bouclier Pique). Jouer un Joker annule l’immunité de l’ennemi actif !',
+    rulesCombosTitle: 'Combinaisons (Combos)',
+    rulesCombosDesc: 'Des cartes de même valeur peuvent être jouées ensemble si leur somme totale est <= 10 (ex: paire de 2, 3, 4, 5 ou brelan de 2, 3). Tous les pouvoirs s’appliquent !',
+    rulesAcesTitle: 'As (Compagnons)',
+    rulesAcesDesc: 'Un As (valeur 1) peut être joué avec n’importe quelle carte unique pour ajouter +1 dégât et déclencher un 2ème pouvoir ! Le pouvoir Cœur est TOUJOURS résolu AVANT Carreau.',
+    rulesExecutionTitle: 'Exécution Parfaite vs Dégâts Excédentaires',
+    rulesExecutionDesc: 'Si les PV d’un ennemi tombent à EXACTEMENT 0, l’ennemi est placé FACE CACHÉE AU-DESSUS de la Taverne (carte de renfort !). Si les dégâts sont excédentaires (PV < 0), il va à la Défausse.',
+    rulesCounterTitle: 'Encaisser la Riposte Ennemie (Étape 4)',
+    rulesCounterDesc: 'Si l’ennemi n’est pas vaincu, le joueur actif doit défausser des cartes de sa main au moins égales à l’attaque nette de l’ennemi (Atk moins boucliers). Ne pas pouvoir défausser la somme requise provoque la Défaite.',
+    rulesPassingTitle: 'Passer son Tour',
+    rulesPassingDesc: 'Un joueur peut passer son tour (sauf si tous les autres joueurs ont déjà passé consécutivement). Passer saute les étapes 2 & 3, mais le joueur DOIT tout de même subir la riposte à l’étape 4 !',
+    close: 'Fermer',
   },
 };

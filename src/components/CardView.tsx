@@ -83,11 +83,6 @@ export const CardView: React.FC<CardViewProps> = ({
             <span className="text-2xl sm:text-3xl font-extrabold text-slate-100 font-cinzel">
               {card.value}
             </span>
-            {isCourt && (
-              <span className="text-[10px] uppercase tracking-widest text-amber-400 font-semibold mt-0.5">
-                {t('court')}
-              </span>
-            )}
           </div>
         )}
       </div>

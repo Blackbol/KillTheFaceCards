@@ -1,18 +1,22 @@
 // 📁 src/App.tsx
 
+import { useState } from 'react';
 import { useGameRoom } from './hooks/useGameRoom';
 import { GameBoard } from './components/GameBoard';
 import { HandView } from './components/HandView';
 import { ActionControls } from './components/ActionControls';
 import { LobbyModal } from './components/LobbyModal';
 import { VictoryGameOverModal } from './components/VictoryGameOverModal';
+import { RulesModal } from './components/RulesModal';
 import { Footer } from './components/Footer';
 import { LanguageToggle } from './components/LanguageToggle';
 import { useI18n } from './i18n/I18nContext';
-import { Crown, LogOut, AlertCircle } from 'lucide-react';
+import { Crown, LogOut, AlertCircle, BookOpen } from 'lucide-react';
 
 export function App() {
   const { t } = useI18n();
+  const [isRulesOpen, setIsRulesOpen] = useState<boolean>(false);
+
   const {
     gameState,
     playerId,
@@ -31,6 +35,10 @@ export function App() {
     resetToLobby,
   } = useGameRoom();
 
+  const handleLeaveGame = () => {
+    resetToLobby();
+  };
+
   const activePlayer = gameState?.players.find((p) => p.id === playerId);
   const showGameScreen = gameState && gameState.status !== 'LOBBY';
 
@@ -39,7 +47,7 @@ export function App() {
       {/* Top Navbar */}
       <header className="w-full border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40 px-4 py-3">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={resetToLobby}>
+          <div className="flex items-center gap-2 cursor-pointer" onClick={handleLeaveGame}>
             <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400">
               <Crown size={20} />
             </div>
@@ -49,11 +57,22 @@ export function App() {
           </div>
 
           <div className="flex items-center gap-3">
+            {/* Rules Quick Reference Button */}
+            <button
+              type="button"
+              onClick={() => setIsRulesOpen(true)}
+              className="flex items-center gap-1.5 text-xs text-amber-300 hover:text-amber-200 bg-amber-950/40 border border-amber-500/30 px-3 py-1.5 rounded-xl transition-all font-semibold shadow-sm"
+            >
+              <BookOpen size={14} />
+              <span>{t('rulesQuickRef')}</span>
+            </button>
+
             <LanguageToggle />
+
             {showGameScreen && (
               <button
                 type="button"
-                onClick={resetToLobby}
+                onClick={handleLeaveGame}
                 className="flex items-center gap-1.5 text-xs text-slate-400 hover:text-rose-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl transition-colors font-medium"
               >
                 <LogOut size={14} />
@@ -109,9 +128,13 @@ export function App() {
         )}
       </main>
 
+      {/* End Game Modal */}
       {gameState && (
-        <VictoryGameOverModal gameState={gameState} onReset={resetToLobby} />
+        <VictoryGameOverModal gameState={gameState} onReset={handleLeaveGame} />
       )}
+
+      {/* Rules Reference Drawer / Modal */}
+      <RulesModal isOpen={isRulesOpen} onClose={() => setIsRulesOpen(false)} />
 
       <Footer />
     </div>
