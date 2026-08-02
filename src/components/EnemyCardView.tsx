@@ -54,8 +54,8 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
         </div>
       </div>
 
-      {/* Center Enemy Emblem */}
-      <div className="my-auto flex flex-col items-center justify-center">
+      {/* Center Enemy Emblem & Badges Group */}
+      <div className="my-auto flex flex-col items-center justify-center gap-1 sm:gap-1.5">
         <div className="relative flex items-center justify-center w-12 h-12 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-full border-2 border-amber-500/30 bg-slate-900/80 shadow-inner">
           <span className="text-xl sm:text-3xl md:text-4xl font-extrabold font-cinzel text-slate-100">
             {enemy.rank[0]}
@@ -64,10 +64,7 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
             <SuitBadge suit={enemy.suit} size={16} />
           </div>
         </div>
-      </div>
 
-      {/* Bottom Status Group: Immunity, Shield, & HP Bar tightly integrated */}
-      <div className="w-full flex flex-col items-center gap-1 sm:gap-1.5 shrink-0 mt-auto">
         {/* Immunity status badge */}
         {enemy.isImmunityCancelled ? (
           <div className="inline-flex items-center gap-1 bg-emerald-950/80 border border-emerald-700/50 text-emerald-300 text-[9px] sm:text-xs font-semibold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full leading-none shadow-sm">
@@ -99,31 +96,31 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
             </span>
           </div>
         )}
+      </div>
 
-        {/* Bottom Polished Health Bar Card */}
-        <div className="w-full bg-slate-950/80 border border-slate-800/90 rounded-xl p-1.5 sm:p-2 space-y-1 shadow-inner shrink-0 mt-0.5">
-          <div className="flex items-center justify-between text-[10px] sm:text-xs font-extrabold tracking-wider">
-            <span className="text-slate-400 uppercase tracking-widest">{t('healthPoints')}</span>
-            <span className={`font-mono text-[11px] sm:text-xs font-black ${
-              hpPercent > 50 ? 'text-emerald-400' : hpPercent > 20 ? 'text-amber-400' : 'text-rose-400'
-            }`}>
-              {enemy.currentHp} / {enemy.maxHp} {t('hpUnit')}
-            </span>
-          </div>
-          <div className="h-2 sm:h-2.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/80 p-0.5">
-            <motion.div
-              initial={{ width: '100%' }}
-              animate={{ width: `${hpPercent}%` }}
-              transition={{ duration: 0.3, ease: 'easeOut' }}
-              className={`h-full rounded-full transition-all duration-300 ${
-                hpPercent > 50
-                  ? 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
-                  : hpPercent > 20
-                  ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
-                  : 'bg-gradient-to-r from-rose-600 via-rose-500 to-red-400 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse'
-              }`}
-            />
-          </div>
+      {/* Bottom Polished Health Bar Card */}
+      <div className="w-full bg-slate-950/80 border border-slate-800/90 rounded-xl p-1.5 sm:p-2 space-y-1 shadow-inner shrink-0">
+        <div className="flex items-center justify-between text-[10px] sm:text-xs font-extrabold tracking-wider">
+          <span className="text-slate-400 uppercase tracking-widest">{t('healthPoints')}</span>
+          <span className={`font-mono text-[11px] sm:text-xs font-black ${
+            hpPercent > 50 ? 'text-emerald-400' : hpPercent > 20 ? 'text-amber-400' : 'text-rose-400'
+          }`}>
+            {enemy.currentHp} / {enemy.maxHp} {t('hpUnit')}
+          </span>
+        </div>
+        <div className="h-2 sm:h-2.5 w-full bg-slate-900 rounded-full overflow-hidden border border-slate-800/80 p-0.5">
+          <motion.div
+            initial={{ width: '100%' }}
+            animate={{ width: `${hpPercent}%` }}
+            transition={{ duration: 0.3, ease: 'easeOut' }}
+            className={`h-full rounded-full transition-all duration-300 ${
+              hpPercent > 50
+                ? 'bg-gradient-to-r from-emerald-500 via-emerald-400 to-teal-300 shadow-[0_0_8px_rgba(52,211,153,0.5)]'
+                : hpPercent > 20
+                ? 'bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-300 shadow-[0_0_8px_rgba(251,191,36,0.5)]'
+                : 'bg-gradient-to-r from-rose-600 via-rose-500 to-red-400 shadow-[0_0_8px_rgba(244,63,94,0.6)] animate-pulse'
+            }`}
+          />
         </div>
       </div>
     </motion.div>
