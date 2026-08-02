@@ -54,7 +54,7 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
         </div>
       </div>
 
-      {/* Center Enemy Emblem & Immunity Badge stuck together */}
+      {/* Center Group: Emblem Circle, Immunity Badge, and Shield Badge ALL STUCK TOGETHER */}
       <div className="my-auto flex flex-col items-center justify-center gap-1 shrink-0">
         <div className="relative flex items-center justify-center w-12 h-12 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-full border-2 border-amber-500/30 bg-slate-900/80 shadow-inner">
           <span className="text-xl sm:text-3xl md:text-4xl font-extrabold font-cinzel text-slate-100">
@@ -83,11 +83,8 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
             </div>
           </div>
         )}
-      </div>
 
-      {/* Bottom Section: Shield & HP Bar Tightly Stuck Together */}
-      <div className="w-full flex flex-col items-center gap-1 shrink-0 mt-auto">
-        {/* Spade Shield Indicator */}
+        {/* Spade Shield Indicator stuck directly below immunity badge */}
         {enemy.currentShield > 0 && (
           <div className="inline-flex items-center gap-1 bg-blue-950/80 border border-blue-600/60 text-blue-300 text-[9px] sm:text-xs font-bold px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full shadow-md animate-pulse leading-none">
             <Shield size={12} className="fill-blue-500/20 shrink-0" />
@@ -99,8 +96,9 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
             </span>
           </div>
         )}
+      </div>
 
-        {/* Polished Health Bar Card */}
+      {/* Bottom Health Bar Panel */}
         <div className="w-full bg-slate-950/80 border border-slate-800/90 rounded-xl p-1.5 sm:p-2 space-y-1 shadow-inner shrink-0">
           <div className="flex items-center justify-between text-[10px] sm:text-xs font-extrabold tracking-wider">
             <span className="text-slate-400 uppercase tracking-widest">{t('healthPoints')}</span>
@@ -125,7 +123,6 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
             />
           </div>
         </div>
-      </div>
     </motion.div>
   );
 };
