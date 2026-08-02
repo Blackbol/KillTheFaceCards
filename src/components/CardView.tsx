@@ -76,11 +76,11 @@ export const CardView: React.FC<CardViewProps> = ({
       onClick={!disabled ? onClick : undefined}
       disabled={disabled}
       className={`
-        relative rounded-xl border-2 transition-all duration-200 select-none flex flex-col justify-between p-2 sm:p-2.5 text-left shrink-0 overflow-hidden
-        w-16 h-24 sm:w-20 sm:h-30 md:w-24 md:h-36 lg:w-26 lg:h-38 text-xs sm:text-sm
+        relative rounded-xl border-2 transition-all duration-200 select-none flex flex-col justify-between p-1.5 sm:p-2.5 text-left shrink-0 overflow-hidden
+        w-14 h-20 sm:w-20 sm:h-30 md:w-24 md:h-36 lg:w-26 lg:h-38 text-xs sm:text-sm
         ${
           isSelected
-            ? 'border-amber-400 bg-slate-800 shadow-lg shadow-amber-500/20 -translate-y-3 ring-2 ring-amber-400'
+            ? 'border-amber-400 bg-slate-800 shadow-lg shadow-amber-500/20 -translate-y-2.5 ring-2 ring-amber-400'
             : 'border-slate-700 bg-slate-900/90 hover:border-slate-500 shadow-md'
         }
         ${isCourt ? 'border-amber-600/40 bg-gradient-to-b from-slate-900 to-slate-950' : ''}

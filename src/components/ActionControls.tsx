@@ -69,7 +69,7 @@ export const ActionControls: React.FC<ActionControlsProps> = ({
   }
 
   return (
-    <div className="w-full fixed bottom-0 left-0 right-0 z-30 p-2.5 bg-slate-950/95 border-t border-slate-800 backdrop-blur-md md:static md:bg-slate-900/90 md:border md:rounded-2xl md:p-3 shadow-2xl flex flex-wrap items-center justify-center gap-2 sm:gap-3">
+    <div className="w-full p-2 sm:p-3 bg-slate-900/90 border border-slate-800 rounded-xl md:rounded-2xl shadow-xl flex flex-wrap items-center justify-center gap-1.5 sm:gap-3 shrink-0">
       {isDiscardPhase ? (
         <div className="w-full flex flex-col sm:flex-row items-center justify-between gap-2">
           <div className="flex items-center gap-2 text-rose-400 font-bold text-xs sm:text-sm">
