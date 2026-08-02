@@ -105,7 +105,7 @@ export const HandView: React.FC<HandViewProps> = ({
       </div>
 
       {/* Cards Hand Container */}
-      <div className="w-full flex overflow-x-auto max-w-full pb-1 pt-5 sm:pt-6 px-2 flex-nowrap md:flex-wrap justify-start md:justify-center items-center gap-2 no-scrollbar shrink-0">
+      <div className="w-full flex overflow-x-auto max-w-full pb-1 pt-3 sm:pt-5 px-1 flex-nowrap md:flex-wrap justify-start md:justify-center items-center gap-1.5 sm:gap-2 no-scrollbar shrink-0">
         {hand.length === 0 ? (
           <div className="w-full text-center text-xs text-slate-500 italic py-1">{t('handEmpty')}</div>
         ) : (

@@ -303,7 +303,7 @@ export function App() {
       </header>
 
       {/* Main Content Area */}
-      <main className="flex-1 flex flex-col items-center justify-between p-1.5 sm:p-3 overflow-hidden min-h-0 pb-16 md:pb-1">
+      <main className="flex-1 flex flex-col items-center justify-between p-1 sm:p-3 overflow-hidden min-h-0">
         {errorMessage && (
           <div className="w-full max-w-xl mb-1 bg-rose-950/90 border border-rose-800 text-rose-300 text-xs font-semibold px-3 py-1.5 rounded-xl flex items-center justify-between shadow-lg animate-fadeIn shrink-0 z-20">
             <div className="flex items-center gap-2">
@@ -333,31 +333,37 @@ export function App() {
             />
           </div>
         ) : (
-          <div className="w-full max-w-6xl flex-1 flex flex-col justify-between items-center gap-1 min-h-0 overflow-hidden">
-            <GameBoard gameState={gameState} activePlayerId={playerId} />
+          <div className="w-full max-w-6xl flex-1 flex flex-col justify-between items-center gap-1.5 min-h-0 overflow-hidden">
+            {/* Scrollable GameBoard Playing Field (Top/Middle section) */}
+            <div className="w-full flex-1 min-h-0 overflow-y-auto no-scrollbar flex flex-col items-center justify-start">
+              <GameBoard gameState={gameState} activePlayerId={playerId} />
+            </div>
 
-            {activePlayer && (
-              <HandView
-                hand={activePlayer.hand}
-                selectedCardIds={selectedCardIds}
-                onToggleSelect={toggleCardSelection}
-                currentEnemy={gameState.currentEnemy}
+            {/* Always Visible Player Interactive Controls Section (Bottom section) */}
+            <div className="w-full shrink-0 flex flex-col items-center gap-1.5 z-20">
+              {activePlayer && (
+                <HandView
+                  hand={activePlayer.hand}
+                  selectedCardIds={selectedCardIds}
+                  onToggleSelect={toggleCardSelection}
+                  currentEnemy={gameState.currentEnemy}
+                  gameState={gameState}
+                  disabled={gameState.currentTurnPlayerId !== playerId && gameState.status !== 'YIELD_JOKER_CHOICE'}
+                />
+              )}
+
+              <ActionControls
                 gameState={gameState}
-                disabled={gameState.currentTurnPlayerId !== playerId && gameState.status !== 'YIELD_JOKER_CHOICE'}
+                activePlayerId={playerId}
+                selectedCardIds={selectedCardIds}
+                onPlayCards={playSelectedCards}
+                onDiscardForDamage={discardSelectedForDamage}
+                onPassTurn={passTurn}
+                onUseSoloJoker={useSoloJoker}
+                onSelectJokerPlayer={selectNextPlayerAfterJoker}
+                onClearSelection={clearSelection}
               />
-            )}
-
-            <ActionControls
-              gameState={gameState}
-              activePlayerId={playerId}
-              selectedCardIds={selectedCardIds}
-              onPlayCards={playSelectedCards}
-              onDiscardForDamage={discardSelectedForDamage}
-              onPassTurn={passTurn}
-              onUseSoloJoker={useSoloJoker}
-              onSelectJokerPlayer={selectNextPlayerAfterJoker}
-              onClearSelection={clearSelection}
-            />
+            </div>
           </div>
         )}
       </main>

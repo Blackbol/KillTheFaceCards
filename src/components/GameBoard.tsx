@@ -110,26 +110,26 @@ export const GameBoard: React.FC<GameBoardProps> = ({ gameState, activePlayerId 
       {/* Main Playing Field Grid: 3 columns on Desktop */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-2 md:gap-4 items-center">
         {/* Decks Column */}
-        <div className="flex flex-row md:flex-col gap-2 items-center justify-between md:justify-start order-2 md:order-1 shrink-0">
-          <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-2 w-full shadow-md">
-            <div className="w-8 h-10 sm:w-10 sm:h-12 rounded-lg border-2 border-slate-700 bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center font-cinzel font-bold text-amber-400 text-sm shadow shrink-0">
+        <div className="flex flex-row md:flex-col gap-1.5 items-center justify-between md:justify-start order-2 md:order-1 shrink-0">
+          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 w-full shadow-md">
+            <div className="w-7 h-8 sm:w-10 sm:h-12 rounded-lg border-2 border-slate-700 bg-gradient-to-br from-slate-800 to-slate-950 flex items-center justify-center font-cinzel font-bold text-amber-400 text-xs sm:text-sm shadow shrink-0">
               T
             </div>
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('tavernDeck')}</div>
-              <div className="text-xs sm:text-base font-extrabold text-slate-100 font-cinzel">
+            <div className="min-w-0">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">{t('tavernDeck')}</div>
+              <div className="text-xs sm:text-base font-extrabold text-slate-100 font-cinzel truncate">
                 {gameState.tavernDeck.length} {gameState.tavernDeck.length === 1 ? t('cardSingular') : t('cardPlural')}
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 bg-slate-900/90 border border-slate-800 rounded-xl p-2 w-full shadow-md">
-            <div className="w-8 h-10 sm:w-10 sm:h-12 rounded-lg border-2 border-dashed border-slate-700 bg-slate-950 flex items-center justify-center font-cinzel font-bold text-slate-500 text-sm shadow shrink-0">
+          <div className="flex items-center gap-1.5 bg-slate-900/90 border border-slate-800 rounded-xl p-1.5 w-full shadow-md">
+            <div className="w-7 h-8 sm:w-10 sm:h-12 rounded-lg border-2 border-dashed border-slate-700 bg-slate-950 flex items-center justify-center font-cinzel font-bold text-slate-500 text-xs sm:text-sm shadow shrink-0">
               D
             </div>
-            <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">{t('discardPile')}</div>
-              <div className="text-xs sm:text-base font-extrabold text-slate-100 font-cinzel">
+            <div className="min-w-0">
+              <div className="text-[9px] sm:text-[10px] text-slate-400 font-bold uppercase tracking-wider truncate">{t('discardPile')}</div>
+              <div className="text-xs sm:text-base font-extrabold text-slate-100 font-cinzel truncate">
                 {gameState.discardPile.length} {gameState.discardPile.length === 1 ? t('cardSingular') : t('cardPlural')}
               </div>
             </div>

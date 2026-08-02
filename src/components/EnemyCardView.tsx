@@ -33,35 +33,35 @@ export const EnemyCardView: React.FC<EnemyCardViewProps> = ({ enemy }) => {
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
-      className="relative w-44 h-60 sm:w-56 sm:h-80 md:w-64 md:h-88 rounded-2xl border-2 border-amber-600/60 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 p-3 sm:p-4 shadow-2xl shadow-amber-950/30 flex flex-col justify-between select-none overflow-hidden shrink-0"
+      className="relative w-36 h-48 sm:w-52 sm:h-72 md:w-60 md:h-84 rounded-2xl border-2 border-amber-600/60 bg-gradient-to-b from-slate-900 via-slate-950 to-slate-900 p-2 sm:p-4 shadow-2xl shadow-amber-950/30 flex flex-col justify-between select-none overflow-hidden shrink-0"
     >
-      {/* Top Banner: Icon only on small mobile to prevent text overlap, full text on desktop */}
-      <div className="flex items-center justify-between border-b border-slate-800/80 pb-2 gap-2">
-        <div className="flex items-center gap-1.5 min-w-0">
-          <span className="text-lg sm:text-2xl font-black font-cinzel text-amber-400 tracking-wider">
+      {/* Top Banner */}
+      <div className="flex items-center justify-between border-b border-slate-800/80 pb-1 sm:pb-2 gap-1.5">
+        <div className="flex items-center gap-1 sm:gap-1.5 min-w-0">
+          <span className="text-sm sm:text-xl md:text-2xl font-black font-cinzel text-amber-400 tracking-wider truncate">
             {enemyRankTranslated}
           </span>
           <div className="sm:hidden">
-            <SuitBadge suit={enemy.suit} size={16} showText={false} />
+            <SuitBadge suit={enemy.suit} size={14} showText={false} />
           </div>
           <div className="hidden sm:block">
-            <SuitBadge suit={enemy.suit} size={20} showText />
+            <SuitBadge suit={enemy.suit} size={18} showText />
           </div>
         </div>
-        <div className="flex items-center gap-1 bg-rose-950/70 border border-rose-800/60 px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-rose-400 font-extrabold text-xs sm:text-sm shrink-0 shadow-sm">
-          <Swords size={13} />
+        <div className="flex items-center gap-1 bg-rose-950/70 border border-rose-800/60 px-1.5 py-0.5 sm:px-2.5 sm:py-1 rounded-full text-rose-400 font-extrabold text-[11px] sm:text-sm shrink-0 shadow-sm">
+          <Swords size={12} />
           <span>{enemy.attack}</span>
         </div>
       </div>
 
       {/* Center Enemy Emblem & Immunity Status */}
-      <div className="my-auto flex flex-col items-center justify-center gap-2 sm:gap-3">
-        <div className="relative flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 border-amber-500/30 bg-slate-900/80 shadow-inner">
-          <span className="text-2xl sm:text-3xl md:text-4xl font-extrabold font-cinzel text-slate-100">
+      <div className="my-auto flex flex-col items-center justify-center gap-1 sm:gap-2.5">
+        <div className="relative flex items-center justify-center w-12 h-12 sm:w-18 sm:h-18 md:w-22 md:h-22 rounded-full border-2 border-amber-500/30 bg-slate-900/80 shadow-inner">
+          <span className="text-xl sm:text-3xl md:text-4xl font-extrabold font-cinzel text-slate-100">
             {enemy.rank[0]}
           </span>
           <div className="absolute -bottom-1">
-            <SuitBadge suit={enemy.suit} size={20} />
+            <SuitBadge suit={enemy.suit} size={16} />
           </div>
         </div>
 
