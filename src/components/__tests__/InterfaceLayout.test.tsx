@@ -15,7 +15,7 @@ function renderWithI18n(ui: React.ReactElement) {
   return render(<I18nProvider>{ui}</I18nProvider>);
 }
 
-describe('UI Interface & Responsive Layout Test Suite', () => {
+describe('UI Interface & Multi-Device Responsive Layout Test Suite', () => {
   let mockGameState: GameState;
 
   beforeEach(() => {
@@ -54,7 +54,38 @@ describe('UI Interface & Responsive Layout Test Suite', () => {
     });
   });
 
-  describe('2. Mobile Viewport Layout (Pixel 9 - 393x852)', () => {
+  describe('2. iPad 10th Gen Tablet Viewport Layout (810x1080)', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 810 });
+      Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 1080 });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    it('renders tablet GameBoard with top bar, decks column, and boss card', () => {
+      renderWithI18n(<GameBoard gameState={mockGameState} activePlayerId="p1" />);
+      expect(screen.getByText('Tavern Deck')).toBeInTheDocument();
+      expect(screen.getByText('Discard Pile')).toBeInTheDocument();
+      expect(screen.getByText('Jack')).toBeInTheDocument();
+    });
+
+    it('renders tablet hand view with full 8-card interactive capacity', () => {
+      const activePlayer = mockGameState.players[0];
+      renderWithI18n(
+        <HandView
+          hand={activePlayer.hand}
+          selectedCardIds={[]}
+          onToggleSelect={() => {}}
+          currentEnemy={mockGameState.currentEnemy}
+          gameState={mockGameState}
+        />
+      );
+
+      const cardButtons = screen.getAllByRole('button');
+      expect(cardButtons.length).toBe(8);
+    });
+  });
+
+  describe('3. iPhone 16 Viewport Layout (393x852)', () => {
     beforeEach(() => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 393 });
       Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 852 });
@@ -84,25 +115,7 @@ describe('UI Interface & Responsive Layout Test Suite', () => {
       expect(screen.getByText(/Shield Active/i)).toBeInTheDocument();
     });
 
-    it('renders Player HandView with 8 initial solo cards', () => {
-      const activePlayer = mockGameState.players[0];
-      renderWithI18n(
-        <HandView
-          hand={activePlayer.hand}
-          selectedCardIds={[]}
-          onToggleSelect={() => {}}
-          currentEnemy={mockGameState.currentEnemy}
-          gameState={mockGameState}
-        />
-      );
-
-      expect(activePlayer.hand.length).toBe(8);
-      // Ensures all 8 cards are rendered in DOM
-      const cardButtons = screen.getAllByRole('button');
-      expect(cardButtons.length).toBeGreaterThanOrEqual(8);
-    });
-
-    it('renders mobile ActionControls with Attack, Pass, and Solo Joker buttons', () => {
+    it('renders iPhone 16 ActionControls with Attack, Pass, and Solo Joker buttons', () => {
       renderWithI18n(
         <ActionControls
           gameState={mockGameState}
@@ -120,6 +133,57 @@ describe('UI Interface & Responsive Layout Test Suite', () => {
       expect(screen.getByText(/ATTACK/i)).toBeInTheDocument();
       expect(screen.getByText(/Pass Turn/i)).toBeInTheDocument();
       expect(screen.getByText(/Use Solo Joker/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('4. Pixel 10 Viewport Layout (412x915)', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 412 });
+      Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 915 });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    it('renders Pixel 10 high-DPI Android layout with Boss Card & HP bar', () => {
+      renderWithI18n(<EnemyCardView enemy={mockGameState.currentEnemy} />);
+
+      expect(screen.getByText('Jack')).toBeInTheDocument();
+      expect(screen.getByText('J')).toBeInTheDocument();
+      expect(screen.getByText(/20 \/ 20/)).toBeInTheDocument();
+    });
+
+    it('renders Pixel 10 player hand view with 8 cards completely visible', () => {
+      const activePlayer = mockGameState.players[0];
+      renderWithI18n(
+        <HandView
+          hand={activePlayer.hand}
+          selectedCardIds={[]}
+          onToggleSelect={() => {}}
+          currentEnemy={mockGameState.currentEnemy}
+          gameState={mockGameState}
+        />
+      );
+
+      const cardButtons = screen.getAllByRole('button');
+      expect(cardButtons.length).toBe(8);
+    });
+
+    it('renders Pixel 10 ActionControls cleanly', () => {
+      renderWithI18n(
+        <ActionControls
+          gameState={mockGameState}
+          activePlayerId="p1"
+          selectedCardIds={[]}
+          onPlayCards={() => {}}
+          onDiscardForDamage={() => {}}
+          onPassTurn={() => {}}
+          onUseSoloJoker={() => {}}
+          onSelectJokerPlayer={() => {}}
+          onClearSelection={() => {}}
+        />
+      );
+
+      expect(screen.getByText(/ATTACK/i)).toBeInTheDocument();
+      expect(screen.getByText(/Pass Turn/i)).toBeInTheDocument();
     });
   });
 });
