@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - feat/mobile-ui-redesign
 
 permissions:
   contents: read
@@ -17,6 +16,9 @@ concurrency:
 
 jobs:
   build-and-deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
