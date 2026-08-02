@@ -136,7 +136,59 @@ describe('UI Interface & Multi-Device Responsive Layout Test Suite', () => {
     });
   });
 
-  describe('4. Pixel 10 Viewport Layout (412x915)', () => {
+  describe('4. Pixel 9 Viewport Layout (412x923)', () => {
+    beforeEach(() => {
+      Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 412 });
+      Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 923 });
+      window.dispatchEvent(new Event('resize'));
+    });
+
+    it('renders Pixel 9 Enemy Boss card with tightly stacked Emblem, Immunity Badge, and HP Panel', () => {
+      renderWithI18n(<EnemyCardView enemy={mockGameState.currentEnemy} />);
+
+      expect(screen.getByText('Jack')).toBeInTheDocument();
+      expect(screen.getByText('J')).toBeInTheDocument();
+      expect(screen.getByText('Immune to')).toBeInTheDocument();
+      expect(screen.getByText(/20 \/ 20/)).toBeInTheDocument();
+    });
+
+    it('renders Pixel 9 player hand view with 8 cards completely visible', () => {
+      const activePlayer = mockGameState.players[0];
+      renderWithI18n(
+        <HandView
+          hand={activePlayer.hand}
+          selectedCardIds={[]}
+          onToggleSelect={() => {}}
+          currentEnemy={mockGameState.currentEnemy}
+          gameState={mockGameState}
+        />
+      );
+
+      const cardButtons = screen.getAllByRole('button');
+      expect(cardButtons.length).toBe(8);
+    });
+
+    it('renders Pixel 9 ActionControls cleanly', () => {
+      renderWithI18n(
+        <ActionControls
+          gameState={mockGameState}
+          activePlayerId="p1"
+          selectedCardIds={[]}
+          onPlayCards={() => {}}
+          onDiscardForDamage={() => {}}
+          onPassTurn={() => {}}
+          onUseSoloJoker={() => {}}
+          onSelectJokerPlayer={() => {}}
+          onClearSelection={() => {}}
+        />
+      );
+
+      expect(screen.getByText(/ATTACK/i)).toBeInTheDocument();
+      expect(screen.getByText(/Pass Turn/i)).toBeInTheDocument();
+    });
+  });
+
+  describe('5. Pixel 10 Viewport Layout (412x915)', () => {
     beforeEach(() => {
       Object.defineProperty(window, 'innerWidth', { writable: true, configurable: true, value: 412 });
       Object.defineProperty(window, 'innerHeight', { writable: true, configurable: true, value: 915 });
